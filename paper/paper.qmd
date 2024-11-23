@@ -1,9 +1,9 @@
 ---
-title: "Number of COVID-19 Cases Around the World"
-subtitle: "Investigating the number of COVID-19 Cases, Tests, and Deaths by Country, Region, Age, and Sex"
+title: "Number of COVID-19 Cases in Canada By Region, Age, and Sex"
+subtitle: "Predicting the Factors that Influence the Number of COVID-19 Cases and Deaths"
 author: 
   - Bruce Zhang
-thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+thanks: "Code and data are available at: [https://github.com/brucejczhang/covid_data](https://github.com/brucejczhang/covid_data)."
 date: today
 date-format: long
 abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
@@ -24,9 +24,7 @@ library(here)
 
 # Load the dataset
 analysis_data <- read.csv(here("data/02-analysis_data/analysis_data.csv"))
-
 ```
-
 
 # Introduction
 
@@ -40,28 +38,21 @@ Why it matters paragraph
 
 Telegraphing paragraph: The remainder of this paper is structured as follows. @sec-data....
 
-
-
-
-
-
 # Data {#sec-data}
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], and rstanarm [@rstanarm]. Our data [@covid_data] was obtained from COVerAGE-DB. The data anlysis was conducted based on the guidance of @tellingstories. 
+We use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], and rstanarm [@rstanarm]. Our data [@covid_data] was obtained from COVerAGE-DB. The data anlysis was conducted based on the guidance of @tellingstories.
 
 Overview text
 
 ## Measurement
-	
+
 Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
 
 ## Outcome variables
 
 Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
-
-
 
 Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 
@@ -69,6 +60,29 @@ Some of our data is of penguins (@fig-bills), from @palmerpenguins.
 #| label: fig-bills
 #| fig-cap: Bills of penguins
 #| echo: false
+
+# Load necessary libraries
+library(dplyr)
+library(knitr)
+
+# Calculate Case Fatality Rate (CFR) and summarize the data
+summary_stats <- analysis_data %>%
+  mutate(
+    CFR = Deaths / (Cases + 1e-6) * 100 # Calculate Case Fatality Rate (percentage)
+  ) %>%
+  group_by(Region, Sex) %>% # Group by Region and Sex
+  summarise(
+    Mean_Age = mean(Age, na.rm = TRUE),             # Average age
+    Total_Cases = sum(Cases, na.rm = TRUE),         # Total cases
+    Total_Deaths = sum(Deaths, na.rm = TRUE),       # Total deaths
+    Mean_CFR = mean(CFR, na.rm = TRUE)              # Average Case Fatality Rate
+  ) %>%
+  ungroup() # Remove grouping for display purposes
+
+# Display the summary table
+kable(summary_stats, digits = 2, col.names = c(
+  "Region", "Sex", "Mean Age", "Total Cases", "Total Deaths", "Mean CFR (%)"
+))
 
 ```
 
@@ -85,20 +99,13 @@ And also planes (@fig-planes). (You can change the height and width, but don't w
 
 ```
 
-Talk way more about it. 
+Talk way more about it.
 
 ## Predictor variables
 
 Add graphs, tables and text.
 
 Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
-
-
-
-
-
-
-
 
 # Model
 
@@ -108,18 +115,165 @@ Here we briefly describe the Bayesian analysis model used to investigate... Back
 
 ## Model set-up
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
+A logistic model has been selected as part of this analysis to examine the relationship between region, sex, age, and the number of cases and deaths of COVID-19. 
 
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
+The logistic regression model predicts the probability of a region or individual being classified as "high risk" based on key predictors. In this case, "high risk" is defined as regions where the death rate (CFR) exceeds the median death rate across the dataset.
+
+The CFR is calculated as: 
+\begin{align}
+\text{CFR} = \frac{\text{Deaths}}{\text{Cases} + 10^{-6}} \times 100
 \end{align}
 
+The \textbf{box-and-whisker plot} visualizes the distribution of predicted probabilities (\( p \)) across different \textbf{age intervals}. Each box represents the interquartile range (IQR) of predicted probabilities, with the line inside the box indicating the median predicted probability for that age interval. Whiskers extend to 1.5 times the IQR, and any points outside this range are considered outliers. This visualization highlights the variability of predicted probabilities within each age group.
+
+The logistic regression model equation is:
+\begin{align}
+\text{logit}(p) = \ln\left(\frac{p}{1 - p}\right) = \beta_0 + \beta_1 \cdot \text{Tests} + \beta_2 \cdot \text{Age Interval} + \epsilon
+\end{align}
+
+
+where:
+\begin{itemize}
+    \item $p$: Predicted probability of being high risk ($p = \text{Predicted Probability}$).
+    \item $\text{logit}(p)$: Log-odds of the high-risk classification.
+    \item $\beta_0$: Intercept of the model.
+    \item $\beta_1, \beta_2$: Coefficients for the predictors (e.g., number of tests, age interval).
+    \item $\epsilon$: Error term.
+\end{itemize}
+
+
+This model explains how testing rates and age intervals affect the likelihood of a region or demographic being classified as high risk. The box-and-whisker plot shows the variability of predicted probabilities across age groups, helping to identify specific age intervals with consistently higher or lower risks.
+
+
 We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+set.seed(21)
+
+# Step 1: Filter for Urban and Rural Regions Only
+filtered_data <- analysis_data %>%
+  mutate(
+    Death_Rate = Deaths / (Cases + 1e-6), # Calculate death rate (avoid division by zero)
+    High_Risk = ifelse(Death_Rate > median(Death_Rate, na.rm = TRUE), 1, 0) # Classify high-risk regions
+  )
+
+# Step 2: Logistic Regression Model
+# Fit a logistic regression model
+logistic_model <- glm(
+  High_Risk ~ Tests + Region + Age,
+  family = binomial(),
+  data = filtered_data
+)
+
+# Summary of the model
+summary(logistic_model)
+
+# Step 3: Add Predictions to the Dataset
+filtered_data <- filtered_data %>%
+  mutate(Predicted_Probability = predict(logistic_model, type = "response"))
+
+# Step 4: Visualize the Results
+# Plot predicted probabilities by region
+ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(
+    title = "Predicted Probability of High Risk by Region (Urban vs Rural)",
+    x = "Region",
+    y = "Predicted Probability of High Risk"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+set.seed(21)
+
+# Step 1: Filter for only 'f' and 'm', and define High Risk
+filtered_data <- analysis_data %>%
+  mutate(
+    Death_Rate = Deaths / (Cases + 1e-6), # Calculate death rate (avoid division by zero)
+    High_Risk = ifelse(Death_Rate > median(Death_Rate, na.rm = TRUE), 1, 0) # Classify high-risk regions
+  )
+
+# Step 2: Logistic Regression Model
+# Fit a logistic regression model
+logistic_model <- glm(
+  High_Risk ~ Tests + Sex + Age,
+  family = binomial(),
+  data = filtered_data
+)
+
+# Summary of the model
+summary(logistic_model)
+
+# Step 3: Add Predictions to the Dataset
+filtered_data <- filtered_data %>%
+  mutate(Predicted_Probability = predict(logistic_model, type = "response"))
+
+# Step 4: Visualize the Results
+# Plot predicted probabilities by sex
+ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(
+    title = "Predicted Probability of High Risk by Sex",
+    x = "Sex",
+    y = "Predicted Probability of High Risk"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+set.seed(21)
+
+# Step 1: Create Age Intervals and Define High Risk
+filtered_data <- analysis_data %>%
+  mutate(
+    Age_Interval = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE, include.lowest = TRUE), # Create age intervals
+    Death_Rate = Deaths / (Cases + 1e-6), # Calculate death rate (avoid division by zero)
+    High_Risk = ifelse(Death_Rate > median(Death_Rate, na.rm = TRUE), 1, 0) # Classify high-risk regions
+  ) %>%
+  filter(!is.na(Age_Interval)) # Remove any rows with missing age intervals
+
+# Step 2: Logistic Regression Model
+# Fit a logistic regression model
+logistic_model <- glm(
+  High_Risk ~ Tests + Age_Interval,
+  family = binomial(),
+  data = filtered_data
+)
+
+# Summary of the model
+summary(logistic_model)
+
+# Step 3: Add Predictions to the Dataset
+filtered_data <- filtered_data %>%
+  mutate(Predicted_Probability = predict(logistic_model, type = "response"))
+
+# Step 4: Visualize the Results
+# Plot predicted probabilities by age interval
+ggplot(filtered_data, aes(x = Age_Interval, y = Predicted_Probability, fill = Age_Interval)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(
+    title = "Predicted Probability of High Risk by Age Interval",
+    x = "Age Interval",
+    y = "Predicted Probability of High Risk"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for readability
+
+```
+
 
 
 ### Model justification
@@ -128,11 +282,9 @@ We expect a positive relationship between the size of the wings and time spent a
 
 We can use maths by including latex between dollar signs, for instance $\theta$.
 
-
 # Results
 
 Our results are summarized in @tbl-modelresults.
-
 
 ```{r}
 #| echo: false
@@ -216,7 +368,7 @@ library(ggplot2)
 library(dplyr)
 
 # Filter data for the selected 5 countries
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+selected_countries <- c("Canada")
 filtered_data <- analysis_data %>%
   filter(Country %in% selected_countries) %>%
   mutate(
@@ -262,7 +414,7 @@ library(ggplot2)
 library(dplyr)
 
 # Filter data for the selected 5 countries
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+selected_countries <- c("Canada")
 filtered_data <- analysis_data %>%
   filter(Country %in% selected_countries) %>%
   mutate(
@@ -335,7 +487,6 @@ ggplot(gender_case_summary, aes(x = Sex, y = Total_Cases, fill = Sex)) +
 
 
 ```
-
 
 ```{r}
 #| echo: false
@@ -455,14 +606,11 @@ ggplot(region_death_summary, aes(x = Region, y = Total_Deaths, fill = Region)) +
 
 ```
 
-
-
-
 # Discussion
 
 ## First discussion point {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this.
 
 ## Second discussion point
 
@@ -478,8 +626,7 @@ Weaknesses and next steps should also be included.
 
 \appendix
 
-# Appendix {-}
-
+# Appendix {.unnumbered}
 
 # Additional data details
 
@@ -487,24 +634,16 @@ Weaknesses and next steps should also be included.
 
 ## Posterior predictive check
 
-
-
 ```{r}
 
 ```
 
 ## Diagnostics
 
-
 ```{r}
 
 ```
 
-
-
 \newpage
 
-
 # References
-
-
