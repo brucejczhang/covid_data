@@ -1,69 +1,120 @@
 #### Preamble ####
-# Purpose: Tests... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 26 September 2024 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Tests the analysis data for any potential problems that may compromise the analysis. 
+# Author: Bruce Zhang
+# Date: 23 September 2024
+# Contact: brucejc.zhang@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: 
+ # - 03-clean_data.R must have been run
+# Any other information needed? Make sure you are in the `COVID_demographics` rproj
 
 
-#### Workspace setup ####
-library(tidyverse)
-library(testthat)
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
 
-data <- read_csv("data/02-analysis_data/analysis_data.csv")
+# Test the integrity of the analysis dataset
+message("Testing the analysis data...")
+
+# Step 1: Load the data
+# Replace 'analysis_data_path' with the actual path to your data file
+analysis_data_path <- "data/02-analysis_data/analysis_data.csv"
+analysis_data <- read.csv(analysis_data_path)
+
+# Step 2: Basic Structure and Preview
+message("Previewing the dataset...")
+print(head(analysis_data))
+print(str(analysis_data))
+
+# Step 3: Check for Missing Values
+message("Checking for missing values...")
+missing_summary <- analysis_data %>%
+  summarise(across(everything(), ~ sum(is.na(.)))) %>%
+  pivot_longer(cols = everything(), names_to = "Variable", values_to = "Missing_Count")
+
+print(missing_summary)
+
+# Step 4: Check for Duplicates
+message("Checking for duplicate rows...")
+duplicates <- analysis_data %>%
+  duplicated() %>%
+  sum()
+message(paste("Number of duplicate rows:", duplicates))
+
+# Step 5: Summary Statistics
+message("Generating summary statistics...")
+summary_statistics <- analysis_data %>%
+  summarise(
+    Total_Regions = n_distinct(Region),
+    Total_Countries = n_distinct(Country),
+    Total_Sexes = n_distinct(Sex),
+    Total_Ages = n_distinct(Age),
+    Total_Cases = sum(Cases, na.rm = TRUE),
+    Total_Deaths = sum(Deaths, na.rm = TRUE),
+    Total_Tests = sum(Tests, na.rm = TRUE)
+  )
+print(summary_statistics)
+
+# Step 6: Validate Key Columns
+message("Validating key columns...")
+
+# Check unique values in categorical columns
+region_values <- unique(analysis_data$Region)
+sex_values <- unique(analysis_data$Sex)
+message("Regions present in the data: ", paste(region_values, collapse = ", "))
+message("Sex categories present in the data: ", paste(sex_values, collapse = ", "))
+
+# Ensure no invalid values in Region or Sex
+valid_regions <- c("Urban", "Rural", "All")
+valid_sexes <- c("m", "f", "b")
+invalid_regions <- setdiff(region_values, valid_regions)
+invalid_sexes <- setdiff(sex_values, valid_sexes)
+if (length(invalid_regions) > 0) {
+  warning("Invalid Region values found: ", paste(invalid_regions, collapse = ", "))
+}
+if (length(invalid_sexes) > 0) {
+  warning("Invalid Sex values found: ", paste(invalid_sexes, collapse = ", "))
+}
+
+# Step 7: Check for Logical Errors
+message("Checking for logical errors...")
+
+# Cases, Deaths, and Tests should not be negative
+negative_values <- analysis_data %>%
+  filter(Cases < 0 | Deaths < 0 | Tests < 0)
+if (nrow(negative_values) > 0) {
+  warning("Negative values found in Cases, Deaths, or Tests:")
+  print(negative_values)
+}
+
+# Deaths should not exceed Cases
+invalid_death_cases <- analysis_data %>%
+  filter(Deaths > Cases)
+if (nrow(invalid_death_cases) > 0) {
+  warning("Deaths exceed Cases in the following rows:")
+  print(invalid_death_cases)
+}
+
+# Step 8: Visualize Key Distributions
+message("Visualizing key distributions...")
+
+# Cases by Region
+ggplot(analysis_data, aes(x = Region, y = Cases, fill = Region)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(title = "Distribution of Cases by Region", x = "Region", y = "Number of Cases") +
+  theme_minimal()
+
+# Deaths by Age
+# Create a histogram of deaths by age
+ggplot(analysis_data, aes(x = Age, weight = Deaths)) +
+  geom_histogram(binwidth = 5, fill = "blue", color = "black", alpha = 0.7) +
+  labs(
+    title = "Distribution of Deaths by Age",
+    x = "Age",
+    y = "Number of Deaths"
+  ) +
+  theme_minimal()
 
 
-#### Test data ####
-# Test that the dataset has 151 rows - there are 151 divisions in Australia
-test_that("dataset has 151 rows", {
-  expect_equal(nrow(analysis_data), 151)
-})
-
-# Test that the dataset has 3 columns
-test_that("dataset has 3 columns", {
-  expect_equal(ncol(analysis_data), 3)
-})
-
-# Test that the 'division' column is character type
-test_that("'division' is character", {
-  expect_type(analysis_data$division, "character")
-})
-
-# Test that the 'party' column is character type
-test_that("'party' is character", {
-  expect_type(analysis_data$party, "character")
-})
-
-# Test that the 'state' column is character type
-test_that("'state' is character", {
-  expect_type(analysis_data$state, "character")
-})
-
-# Test that there are no missing values in the dataset
-test_that("no missing values in dataset", {
-  expect_true(all(!is.na(analysis_data)))
-})
-
-# Test that 'division' contains unique values (no duplicates)
-test_that("'division' column contains unique values", {
-  expect_equal(length(unique(analysis_data$division)), 151)
-})
-
-# Test that 'state' contains only valid Australian state or territory names
-valid_states <- c("New South Wales", "Victoria", "Queensland", "South Australia", "Western Australia", 
-                  "Tasmania", "Northern Territory", "Australian Capital Territory")
-test_that("'state' contains valid Australian state names", {
-  expect_true(all(analysis_data$state %in% valid_states))
-})
-
-# Test that there are no empty strings in 'division', 'party', or 'state' columns
-test_that("no empty strings in 'division', 'party', or 'state' columns", {
-  expect_false(any(analysis_data$division == "" | analysis_data$party == "" | analysis_data$state == ""))
-})
-
-# Test that the 'party' column contains at least 2 unique values
-test_that("'party' column contains at least 2 unique values", {
-  expect_true(length(unique(analysis_data$party)) >= 2)
-})
+# Step 9: Testing Complete
+message("Analysis data testing completed successfully!")

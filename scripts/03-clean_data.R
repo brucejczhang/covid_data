@@ -15,7 +15,7 @@ library(tidyverse)
 
 # Step 1: Remove unnecessary columns (if applicable)
 data_cleaned <- simulated_data %>%
-  select(Country, Region, Date, Sex, Age, Cases, Deaths, Tests)
+  select(Country, Region, Date, Sex, Age, Cases, Deaths)
 
 # Step 2: Handle missing values
 # Replace missing numeric values with 0 (if appropriate)
@@ -49,12 +49,13 @@ data_cleaned <- data_cleaned %>%
     Age = as.numeric(Age),
     Cases = as.numeric(Cases),
     Deaths = as.numeric(Deaths),
-    Tests = as.numeric(Tests)
   )
 
 # Remove duplicate rows (if any)
 data_cleaned <- data_cleaned %>%
-  distinct()
+  distinct() %>%
+  filter(Country == "Canada") %>%
+  filter(Region %in% c("Urban", "Rural"), Sex %in% c("m", "f"))
 
 # Check for and handle outliers (optional)
 # For example, cap unrealistic values for 'Cases', 'Deaths', or 'Tests'
@@ -64,6 +65,9 @@ data_cleaned <- data_cleaned %>%
     Deaths = ifelse(Deaths > 1000, 1000, Deaths),
     Tests = ifelse(Tests > 500000, 500000, Tests)
   )
+
+data_cleaned <- data_cleaned %>%
+  filter(Deaths <= Cases)
 
 # Add calculated columns (if needed)
 # Example: Case Fatality Rate (CFR)
