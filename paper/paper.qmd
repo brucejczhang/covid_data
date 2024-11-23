@@ -1,0 +1,510 @@
+---
+title: "Number of COVID-19 Cases Around the World"
+subtitle: "Investigating the number of COVID-19 Cases, Tests, and Deaths by Country, Region, Age, and Sex"
+author: 
+  - Bruce Zhang
+thanks: "Code and data are available at: [https://github.com/RohanAlexander/starter_folder](https://github.com/RohanAlexander/starter_folder)."
+date: today
+date-format: long
+abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(here)
+
+# Load the dataset
+analysis_data <- read.csv(here("data/02-analysis_data/analysis_data.csv"))
+
+```
+
+
+# Introduction
+
+Overview paragraph
+
+Estimand paragraph
+
+Results paragraph
+
+Why it matters paragraph
+
+Telegraphing paragraph: The remainder of this paper is structured as follows. @sec-data....
+
+
+
+
+
+
+# Data {#sec-data}
+
+## Overview
+
+We use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], and rstanarm [@rstanarm]. Our data [@covid_data] was obtained from COVerAGE-DB. The data anlysis was conducted based on the guidance of @tellingstories. 
+
+Overview text
+
+## Measurement
+	
+Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
+
+## Outcome variables
+
+Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
+
+
+
+Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+
+```{r}
+#| label: fig-bills
+#| fig-cap: Bills of penguins
+#| echo: false
+
+```
+
+Talk more about it.
+
+And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
+
+```{r}
+#| label: fig-planes
+#| fig-cap: Relationship between wing length and width
+#| echo: false
+#| warning: false
+#| message: false
+
+```
+
+Talk way more about it. 
+
+## Predictor variables
+
+Add graphs, tables and text.
+
+Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
+
+
+
+
+
+
+
+
+# Model
+
+The goal of our modelling strategy is twofold. Firstly,...
+
+Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
+
+## Model set-up
+
+Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
+
+\begin{align} 
+y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
+\mu_i &= \alpha + \beta_i + \gamma_i\\
+\alpha &\sim \mbox{Normal}(0, 2.5) \\
+\beta &\sim \mbox{Normal}(0, 2.5) \\
+\gamma &\sim \mbox{Normal}(0, 2.5) \\
+\sigma &\sim \mbox{Exponential}(1)
+\end{align}
+
+We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+
+
+### Model justification
+
+We expect a positive relationship between the size of the wings and time spent aloft. In particular...
+
+We can use maths by including latex between dollar signs, for instance $\theta$.
+
+
+# Results
+
+Our results are summarized in @tbl-modelresults.
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+library(rstanarm)
+
+first_model <-
+  readRDS(file = here::here("models/first_model.rds"))
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: cases-by-country
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary library
+library(ggplot2)
+
+# Create a bar plot of total cases per country
+ggplot(analysis_data, aes(x = Country, y = Cases, fill = Country)) +
+  geom_bar(stat = "identity", color = "lightblue", alpha = 0.
+)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: cases-over-time
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+library(lubridate) # For date handling
+
+# Filter data to include all regions
+filtered_data <- analysis_data %>%
+  filter(Region == "All") %>%
+  mutate(
+    # Ensure the Date column is in proper Date format
+    Date = as.Date(Date, format = "%Y-%m-%d"),
+    # Extract the year and month to group by
+    Month = floor_date(Date, unit = "month")
+  )
+
+
+# Create the scatterplot with aggregated monthly cases
+ggplot(filtered_data, aes(x = Date, y = Cases, color = Country, group = Country)) +
+  geom_point(alpha = 0.7) +   # Add scatter points
+  geom_line(size = 1) +       # Add lines connecting points for each country
+  labs(
+    title = "Monthly COVID Cases in Canada (Urban Region)",
+    x = "Month",
+    y = "Total Number of Cases",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: cases-by-age
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+filtered_data <- analysis_data %>%
+  filter(Country %in% selected_countries) %>%
+  mutate(
+    # Create age intervals
+    Age_Interval = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE, include.lowest = TRUE)
+  )
+
+# Aggregate the number of cases by country and age interval
+age_case_summary <- filtered_data %>%
+  group_by(Country, Age_Interval) %>%
+  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>%
+  ungroup()
+
+# Create the faceted histogram
+ggplot(age_case_summary, aes(x = Age_Interval, y = Total_Cases, fill = Country)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") +
+  facet_wrap(~Country, scales = "free_y") + # Create a grid of histograms for each country
+  labs(
+    title = "COVID Cases by Age Interval in Selected Countries",
+    x = "Age Interval",
+    y = "Number of Cases",
+    fill = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major = element_line(color = "grey80"),
+    legend.position = "none"
+  )
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: deaths-by-age
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+filtered_data <- analysis_data %>%
+  filter(Country %in% selected_countries) %>%
+  mutate(
+    # Create age intervals
+    Age_Interval = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE, include.lowest = TRUE)
+  )
+
+# Aggregate the number of deaths by country and age interval
+age_death_summary <- filtered_data %>%
+  group_by(Country, Age_Interval) %>%
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Use Deaths column
+  ungroup()
+
+# Create the faceted histogram for deaths
+ggplot(age_death_summary, aes(x = Age_Interval, y = Total_Deaths, fill = Country)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") +
+  facet_wrap(~Country, scales = "free_y") + # Create a grid of histograms for each country
+  labs(
+    title = "COVID Deaths by Age Interval in Selected Countries",
+    x = "Age Interval",
+    y = "Number of Deaths",
+    fill = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major = element_line(color = "grey80"),
+    legend.position = "none"
+  )
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: cases-by-sex
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries and group by gender and country
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+gender_case_summary <- analysis_data %>%
+  filter(Country %in% selected_countries, Sex %in% c("f", "m")) %>% # Filter for selected countries and genders
+  group_by(Country, Sex) %>%
+  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>% # Summarize total cases by gender and country
+  ungroup()
+
+# Create the faceted bar graph
+ggplot(gender_case_summary, aes(x = Sex, y = Total_Cases, fill = Sex)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
+  facet_wrap(~Country, scales = "free_y") + # Facet by country
+  scale_fill_manual(values = c("f" = "pink", "m" = "blue")) + # Optional: Gender-specific colors
+  labs(
+    title = "COVID Cases by Gender in Selected Countries",
+    x = "Gender",
+    y = "Number of Cases",
+    fill = "Gender"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    strip.text = element_text(size = 14),
+    panel.spacing = unit(1, "lines") # Increase spacing between facets
+  )
+
+
+```
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: deaths-by-sex
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries and group by gender and country
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+gender_death_summary <- analysis_data %>%
+  filter(Country %in% selected_countries, Sex %in% c("f", "m")) %>% # Filter for selected countries and genders
+  group_by(Country, Sex) %>%
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Summarize total deaths by gender and country
+  ungroup()
+
+# Create the faceted bar graph
+ggplot(gender_death_summary, aes(x = Sex, y = Total_Deaths, fill = Sex)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
+  facet_wrap(~Country, scales = "free_y") + # Facet by country
+  scale_fill_manual(values = c("f" = "pink", "m" = "blue")) + # Optional: Gender-specific colors
+  labs(
+    title = "COVID Deaths by Gender in Selected Countries",
+    x = "Gender",
+    y = "Number of Deaths",
+    fill = "Gender"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    strip.text = element_text(size = 14),
+    panel.spacing = unit(1, "lines") # Increase spacing between facets
+  )
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: cases-by-region
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries and group by region and country
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+region_case_summary <- analysis_data %>%
+  filter(Country %in% selected_countries) %>% # Filter for selected countries
+  group_by(Country, Region) %>%
+  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>% # Summarize total cases by region and country
+  ungroup()
+
+# Create the faceted bar graph
+ggplot(region_case_summary, aes(x = Region, y = Total_Cases, fill = Region)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
+  facet_wrap(~Country, scales = "free_y") + # Facet by country
+  labs(
+    title = "COVID Cases by Region in Selected Countries",
+    x = "Region",
+    y = "Number of Cases",
+    fill = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12), # Rotate x-axis labels for readability
+    axis.title = element_text(size = 14),
+    strip.text = element_text(size = 14),
+    panel.spacing = unit(1, "lines") # Increase spacing between facets
+  )
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: deaths-by-region
+#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Filter data for the selected 5 countries and group by region and country
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+region_death_summary <- analysis_data %>%
+  filter(Country %in% selected_countries) %>% # Filter for selected countries
+  group_by(Country, Region) %>%
+  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Summarize total deaths by region and country
+  ungroup()
+
+# Create the faceted bar graph
+ggplot(region_death_summary, aes(x = Region, y = Total_Deaths, fill = Region)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
+  facet_wrap(~Country, scales = "free_y") + # Facet by country
+  labs(
+    title = "COVID Deaths by Region in Selected Countries",
+    x = "Region",
+    y = "Number of Deaths",
+    fill = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12), # Rotate x-axis labels for readability
+    axis.title = element_text(size = 14),
+    strip.text = element_text(size = 14),
+    panel.spacing = unit(1, "lines") # Increase spacing between facets
+  )
+
+```
+
+
+
+
+# Discussion
+
+## First discussion point {#sec-first-point}
+
+If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+
+## Second discussion point
+
+Please don't use these as sub-heading labels - change them to be what your point actually is.
+
+## Third discussion point
+
+## Weaknesses and next steps
+
+Weaknesses and next steps should also be included.
+
+\newpage
+
+\appendix
+
+# Appendix {-}
+
+
+# Additional data details
+
+# Model details {#sec-model-details}
+
+## Posterior predictive check
+
+
+
+```{r}
+
+```
+
+## Diagnostics
+
+
+```{r}
+
+```
+
+
+
+\newpage
+
+
+# References
+
+
