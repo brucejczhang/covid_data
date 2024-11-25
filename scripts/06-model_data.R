@@ -1,11 +1,12 @@
 #### Preamble ####
-# Purpose: Models... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 11 February 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Models the predicted probability of high risk based on the predictor variables of the dataset
+# Author: Bruce Zhang
+# Date: 25 November 2024
+# Contact: brucejc.zhang@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: 
+  # - 03-clean_data.R must have been run
+# Any other information needed? Make sure you are in the `COVID_demographics` rproj
 
 # Install and load necessary pacakges/libraries
 install.packages("caret")
