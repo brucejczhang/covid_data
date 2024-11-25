@@ -28,86 +28,255 @@ analysis_data <- read.csv(here("data/02-analysis_data/analysis_data.csv"))
 
 # Introduction
 
-Overview paragraph
+The COVID-19 pandemic is something that is difficult to forget. Although it is now in the past, the effects that it had on society and how we function as individuals is still profound. At the same time, the statistical information that sprouted from the pandemic has a high value for analysis. This is not only to better understand the pandemic and how it affected populations but also to form a strong idea of its patterns to suggest tactics for dealing with pandemics shall something similar happen in the future.
 
-Estimand paragraph
+Studies have been done in recent years in attempts to utilize the data that was gathered during COVID times to better advise future preventions and treatment for pandemic situations. Many studies look into the relationship between demographic information of populations and their likelihood of getting diagnosed or fatality. One study found that communities on hillsides and other locations with enhanced ventilation and oxygen had reduced numbers of COVID cases [@cite-covid_demographics]. Other studies have found relationships between exercise and cardiovascular function and the likelihood of getting COVID [@cite-cardio_and_covid]. Although many relationships have been examined, there has been a lack of studies focusing on a broad set of demographic traits such as age and sex. There has also not been cross comparisons of region and demographic aspects. Another gap is the lack of country-specific analysis, particularly Canada. 
 
-Results paragraph
+This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the different population and individual-level variables, such as age, sex, and region of life, influenced the risk of being diagnosed with COVID and the risk of fatality. The paper uses the demographic data gathered from 2022 to predict the characteristics of populations and individuals that may be at higher risk of fatality once they have been diagnosed with COVID. This analysis may have broader implications for preventative measures for flues, other diseases, and pandemics in the future. 
 
-Why it matters paragraph
+The analysis focuses on the outcome variable of predicted probability of high risk, which is a function of number of cases and number of deaths per datapoint and is further defined in @sec-model. The model predicts the probability of high risk as a result of a series of predictor variables including region, sex, and age of the reported data. 
 
-Telegraphing paragraph: The remainder of this paper is structured as follows. @sec-data....
+Results paragraph (what was found?)
+
+Why it matters paragraph (why it matters?)
+
+The remainder of this paper is structured as follows. @sec-data highlights the characteristics of the dataset. The section summarizes the data through a series of summary statistics (@fig-summary) and represents the data in a visual way where specific trends and patterns can be observed (@fig-cases_over_time, @fig-cfr). @sec-model creates a logistic regression model predicting the probability of high risk depending on the region, sex, and age of the data point. The section includes model figures that display the predicted probabilities of high risk for the predictor variables respectively. 
+
 
 # Data {#sec-data}
 
 ## Overview
 
-We use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], and rstanarm [@rstanarm]. Our data [@covid_data] was obtained from COVerAGE-DB. The data anlysis was conducted based on the guidance of @tellingstories.
+I use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], caret [@caret], and pROC [@pROC]. My data [@covid_data] was obtained from COVerAGE-DB, which was housed in Open Science Framework. The data anlysis was conducted based on the guidance of @tellingstories.
 
-Overview text
 
 ## Measurement
 
+The dataset used in this analysis was gathered by COVerAGE-DB, a database that focuses on COVID related data. COVerAGE-DB often gathers data relating to COVID such as the number of cases, deaths, tests, and vaccinations through governmental institutes such as health ministries and statistical offices. This data is then organized by other variables such as sex, region, country, and age and presented to the general public. 
+
 Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
 
-## Outcome variables
+## Data Cleaning
 
-Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
+The original dataset contained data from five different countries including. For the purpose to focus on data in Canada for this analysis, the datapoints for other countries were removed. Further cleaning was done to remove any problematic datapoints such as when the number of deaths exceeded the number of cases. 
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+## Outcome Variables and Predictor Variables
+
+The cleaned dataset contains variables including the country, region, date, sex, and age where the number of cases, deaths, and tests were reported. @fig-head_analysis_data shows a sample of the dataset, presenting the first six rows of the analysis data. The outcome variables highlighted include the total number of cases and the total number of deaths. 
 
 ```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
+#| label: fig-head_analysis_data
+#| fig-cap: First six rows of the dataset after cleaning
 #| echo: false
+#| warning: false
+#| message: false
+
+# Load the necessary library
+library(knitr)
+
+# Display the first few rows of analysis_data
+head_table <- head(analysis_data)
+
+# Render the table with kable
+kable(
+  head_table,
+  booktabs = TRUE,  # Add better table styling
+)
+```
+
+```{r}
+#| label: fig-summary
+#| fig-cap: Summary Statistics of COVID-19 Cases in Canada
+#| echo: false
+#| warning: false
+#| message: false
 
 # Load necessary libraries
 library(dplyr)
 library(knitr)
 
-# Calculate Case Fatality Rate (CFR) and summarize the data
-summary_stats <- analysis_data %>%
-  mutate(
-    CFR = Deaths / (Cases + 1e-6) * 100 # Calculate Case Fatality Rate (percentage)
-  ) %>%
-  group_by(Region, Sex) %>% # Group by Region and Sex
+# Create the summary statistics table
+summary_table <- analysis_data %>%
+  filter(Region %in% c("Urban", "Rural"), Sex %in% c("f", "m")) %>%
+  group_by(Region, Sex) %>%
   summarise(
-    Mean_Age = mean(Age, na.rm = TRUE),             # Average age
-    Total_Cases = sum(Cases, na.rm = TRUE),         # Total cases
-    Total_Deaths = sum(Deaths, na.rm = TRUE),       # Total deaths
-    Mean_CFR = mean(CFR, na.rm = TRUE)              # Average Case Fatality Rate
+    Mean_Age = round(mean(Age, na.rm = TRUE), 2), # Rounded Mean Age
+    Total_Cases = sum(Cases, na.rm = TRUE),
+    Total_Deaths = sum(Deaths, na.rm = TRUE),
+    Average_Cases = round(mean(Cases, na.rm = TRUE), 2), # Rounded Average Cases
+    Average_Deaths = round(mean(Deaths, na.rm = TRUE), 2), # Rounded Average Deaths
+    CFR = round((Total_Deaths / Total_Cases) * 100, 2) # Rounded CFR (%)
   ) %>%
-  ungroup() # Remove grouping for display purposes
+  ungroup()
 
-# Display the summary table
-kable(summary_stats, digits = 2, col.names = c(
-  "Region", "Sex", "Mean Age", "Total Cases", "Total Deaths", "Mean CFR (%)"
-))
+# Render the table using kable
+summary_table %>%
+  kable(
+    col.names = c("Region", "Sex", "Mean Age", "Total Cases", "Total Deaths", 
+                  "Average Cases", "Average Deaths", "CFR (%)")
+  )
+
 
 ```
 
-Talk more about it.
+@fig-summary further breaks down the data summarizing the mean number of cases and deaths by region and sex. This creates an all-rounded summary of the dataset and gives a preliminary idea on the differences in cases and deaths depending on the categories of sex and region. 
 
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
+### Number of Cases and Number of Deaths
+
+The total and average numbers of cases and deaths are key outcome variables that can be correlated with the categorical predictors. These number can demonstrate the differences in COVID-19 susceptibility and threat level based on the characteristics of the region and the individual. 
+
+### Case Fatality Rate
+
+The case fatality rate (CFR) is an additional aspect of the summary that was calculated to standardize the deaths and cases by category. This can be used as a processed outcome variable that can better represent the dataset and aid modeling later on. The total number of deaths and cases may lead to inaccurate representations of a region, sex, or age group due to the absolute number of individuals that fall within the category. The CFR value allows better comparison across categories. 
+
 
 ```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
+#| echo: false
+#| eval: true
+#| label: fig-cases_over_time
+#| fig-cap: "Number of cases per month in 2022 in Canada"
+#| warning: false
+
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+set.seed(21)
+
+# Ensure Date is a proper Date object
+analysis_data <- analysis_data %>%
+  mutate(Date = as.Date(Date))
+
+# Aggregate data by month and year
+aggregated_data <- analysis_data %>%
+  mutate(Month_Year = floor_date(Date, unit = "month")) %>% # Group by month
+  group_by(Month_Year) %>%
+  summarise(
+    Total_Cases = sum(Cases, na.rm = TRUE) # Summing cases for each month
+  ) %>%
+  ungroup()
+
+# Create the bar graph with trend line
+ggplot(aggregated_data, aes(x = Month_Year, y = Total_Cases)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) + # Bar plot
+  geom_smooth(method = "loess", se = TRUE, color = "red", size = 1.2) + # Trend line
+  labs(
+    title = "",
+    x = "Month-Year",
+    y = "Total Cases"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold")
+  )
+
+```
+
+### Time
+
+The time of year can also be correlated with the likelihood of getting COVID-19 independent of other predictor variables. As shown in @fig-cases_over_time, there is a weak pattern of increased total number of cases in the early summer months of May and June. The number of cases in winter and near winter months, specifically January and October, seem to be lower. 
+
+```{r}
+#| label: fig-cfr
+#| fig-cap: Case Fatality Rate (CFR) by Age Group, Region, and Sex
 #| echo: false
 #| warning: false
 #| message: false
 
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+set.seed(21)
+
+# Filter data to include only Urban and Rural regions and relevant sexes
+filtered_data <- analysis_data %>%
+  filter(Region %in% c("Urban", "Rural"), Sex %in% c("f", "m")) %>% # Filter for Urban, Rural, and f/m genders
+  mutate(Age_Group = cut(Age, breaks = seq(0, 100, by = 10), include.lowest = TRUE)) # Create age intervals
+
+# Aggregate data by Age_Group, Region, and Sex, and calculate CFR
+aggregated_data <- filtered_data %>%
+  group_by(Age_Group, Region, Sex) %>%
+  summarise(
+    Total_Deaths = sum(Deaths, na.rm = TRUE),  # Sum up deaths
+    Total_Cases = sum(Cases, na.rm = TRUE),    # Sum up cases
+    CFR = (Total_Deaths / Total_Cases) * 100   # Calculate CFR
+  ) %>%
+  ungroup()
+
+# Create the bar graph for CFR by age group, region, and sex
+ggplot(aggregated_data, aes(x = Age_Group, y = CFR, fill = Sex)) +
+  geom_bar(stat = "identity", position = "dodge") + # Dodge bars to show sexes side by side
+  facet_wrap(~Region, ncol = 1) + # Separate plots for Urban and Rural regions
+  labs(
+    title = "",
+    x = "Age Group",
+    y = "CFR (%)",
+    fill = "Sex"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for readability
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold"),
+    strip.text = element_text(size = 12, face = "bold") # Adjust facet labels
+  )
+
+```
+### Age, Sex, and Region
+
+Age, sex, and region are key predictor variables that are examined in this analysis. In @fig-cfr, these variables are organized relative to the CFR, which calculates a rate based on the number of cases and number of deaths and allows standardized comparisons across different predictor variables. 
+@fig-cfr shows that the urban and rural regions have similar patterns in CFR across different age groups. The CFR for males tend to be higher more often than not compared to the CFR of females, indicating that males may have a higher likelihood of death after diagnosis of COVID in Canada. The pattern of CFR in relation to age seem to vary quite significantly between urban and rural regions and between male and females. For females, the highest CFR seems to be for individuals aged under 30 and for those around 70 to 80 regardless of region. Male CFR values peak at age interval 20 to 30 for urban regions and 30 to 40 for rural regions. 
+
+@fig-cfr_by_region shows a more direct comparison of the CFR between urban and rural regions of Canada, combining different age groups and sexes. This figure shows that the CFR in rural regions is noticeably higher than that of urban. Although the difference is small, it is still a considerable size difference when considering the number of people that a small percentage can be responsible for, based on the summary statistics from @fig-summary. 
+
+```{r}
+#| echo: false
+#| eval: true
+#| label: fig-cfr_by_region
+#| fig-cap: "Case Fatality Rate (CFR) by Region in 2022 in Canada"
+#| warning: false
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+set.seed(21)
+
+# Filter data for the selected 5 countries and group by region and country
+selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
+region_cfr_summary <- analysis_data %>%
+  filter(Country %in% selected_countries, Region %in% c("Urban", "Rural")) %>% # Filter for selected countries and regions
+  group_by(Country, Region) %>%
+  summarise(
+    Total_Deaths = sum(Deaths, na.rm = TRUE),  # Summarize total deaths
+    Total_Cases = sum(Cases, na.rm = TRUE),    # Summarize total cases
+    CFR = (Total_Deaths / Total_Cases) * 100  # Calculate CFR
+  ) %>%
+  ungroup()
+
+# Create the faceted bar graph for CFR by region
+ggplot(region_cfr_summary, aes(x = Region, y = CFR, fill = Region)) +
+  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with CFR
+  scale_fill_manual(values = c("Urban" = "steelblue", "Rural" = "forestgreen")) + # Optional: Region-specific colors
+  labs(
+    title = "",
+    x = "Region",
+    y = "CFR (%)",
+    fill = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    strip.text = element_text(size = 14),
+    panel.spacing = unit(1, "lines") # Increase spacing between facets
+  )
+
 ```
 
-Talk way more about it.
 
-## Predictor variables
-
-Add graphs, tables and text.
-
-Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
-
-# Model
+# Model {#sec-model}
 
 The goal of our modelling strategy is twofold. Firstly,...
 
@@ -147,7 +316,24 @@ This model explains how testing rates and age intervals affect the likelihood of
 
 We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
 
+
+### Model justification
+
+We expect a positive relationship between the size of the wings and time spent aloft. In particular...
+
+We can use maths by including latex between dollar signs, for instance $\theta$.
+
+# Results {#sec-results}
+
+Our results are summarized in @tbl-modelresults.
+
 ```{r}
+#| label: model-risk_urban_vs_rural
+#| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural)
+#| echo: false
+#| warning: false
+#| message: false
+
 # Load necessary libraries
 library(dplyr)
 library(ggplot2)
@@ -180,7 +366,7 @@ filtered_data <- filtered_data %>%
 ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region)) +
   geom_boxplot(alpha = 0.6) +
   labs(
-    title = "Predicted Probability of High Risk by Region (Urban vs Rural)",
+    title = "",
     x = "Region",
     y = "Predicted Probability of High Risk"
   ) +
@@ -190,6 +376,12 @@ ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region))
 ```
 
 ```{r}
+#| label: model-risk_sex
+#| fig-cap: Predicted probability of high risk based on sex
+#| echo: false
+#| warning: false
+#| message: false
+
 # Load necessary libraries
 library(dplyr)
 library(ggplot2)
@@ -222,7 +414,7 @@ filtered_data <- filtered_data %>%
 ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
   geom_boxplot(alpha = 0.6) +
   labs(
-    title = "Predicted Probability of High Risk by Sex",
+    title = "",
     x = "Sex",
     y = "Predicted Probability of High Risk"
   ) +
@@ -231,6 +423,12 @@ ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
 ```
 
 ```{r}
+#| label: model-risk_age
+#| fig-cap: Predicted probability of high risk based on age intervals
+#| echo: false
+#| warning: false
+#| message: false
+
 # Load necessary libraries
 library(dplyr)
 library(ggplot2)
@@ -265,7 +463,7 @@ filtered_data <- filtered_data %>%
 ggplot(filtered_data, aes(x = Age_Interval, y = Predicted_Probability, fill = Age_Interval)) +
   geom_boxplot(alpha = 0.6) +
   labs(
-    title = "Predicted Probability of High Risk by Age Interval",
+    title = "",
     x = "Age Interval",
     y = "Predicted Probability of High Risk"
   ) +
@@ -276,335 +474,10 @@ ggplot(filtered_data, aes(x = Age_Interval, y = Predicted_Probability, fill = Ag
 
 
 
-### Model justification
-
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
-
-```{r}
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-library(rstanarm)
-
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: cases-by-country
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary library
-library(ggplot2)
-
-# Create a bar plot of total cases per country
-ggplot(analysis_data, aes(x = Country, y = Cases, fill = Country)) +
-  geom_bar(stat = "identity", color = "lightblue", alpha = 0.
-)
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: cases-over-time
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-library(lubridate) # For date handling
-
-# Filter data to include all regions
-filtered_data <- analysis_data %>%
-  filter(Region == "All") %>%
-  mutate(
-    # Ensure the Date column is in proper Date format
-    Date = as.Date(Date, format = "%Y-%m-%d"),
-    # Extract the year and month to group by
-    Month = floor_date(Date, unit = "month")
-  )
 
 
-# Create the scatterplot with aggregated monthly cases
-ggplot(filtered_data, aes(x = Date, y = Cases, color = Country, group = Country)) +
-  geom_point(alpha = 0.7) +   # Add scatter points
-  geom_line(size = 1) +       # Add lines connecting points for each country
-  labs(
-    title = "Monthly COVID Cases in Canada (Urban Region)",
-    x = "Month",
-    y = "Total Number of Cases",
-    color = "Country"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
-  )
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: cases-by-age
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries
-selected_countries <- c("Canada")
-filtered_data <- analysis_data %>%
-  filter(Country %in% selected_countries) %>%
-  mutate(
-    # Create age intervals
-    Age_Interval = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE, include.lowest = TRUE)
-  )
-
-# Aggregate the number of cases by country and age interval
-age_case_summary <- filtered_data %>%
-  group_by(Country, Age_Interval) %>%
-  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>%
-  ungroup()
-
-# Create the faceted histogram
-ggplot(age_case_summary, aes(x = Age_Interval, y = Total_Cases, fill = Country)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") +
-  facet_wrap(~Country, scales = "free_y") + # Create a grid of histograms for each country
-  labs(
-    title = "COVID Cases by Age Interval in Selected Countries",
-    x = "Age Interval",
-    y = "Number of Cases",
-    fill = "Country"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.major = element_line(color = "grey80"),
-    legend.position = "none"
-  )
 
 
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: deaths-by-age
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries
-selected_countries <- c("Canada")
-filtered_data <- analysis_data %>%
-  filter(Country %in% selected_countries) %>%
-  mutate(
-    # Create age intervals
-    Age_Interval = cut(Age, breaks = seq(0, 100, by = 10), right = FALSE, include.lowest = TRUE)
-  )
-
-# Aggregate the number of deaths by country and age interval
-age_death_summary <- filtered_data %>%
-  group_by(Country, Age_Interval) %>%
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Use Deaths column
-  ungroup()
-
-# Create the faceted histogram for deaths
-ggplot(age_death_summary, aes(x = Age_Interval, y = Total_Deaths, fill = Country)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") +
-  facet_wrap(~Country, scales = "free_y") + # Create a grid of histograms for each country
-  labs(
-    title = "COVID Deaths by Age Interval in Selected Countries",
-    x = "Age Interval",
-    y = "Number of Deaths",
-    fill = "Country"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),
-    panel.grid.major = element_line(color = "grey80"),
-    legend.position = "none"
-  )
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: cases-by-sex
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries and group by gender and country
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
-gender_case_summary <- analysis_data %>%
-  filter(Country %in% selected_countries, Sex %in% c("f", "m")) %>% # Filter for selected countries and genders
-  group_by(Country, Sex) %>%
-  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>% # Summarize total cases by gender and country
-  ungroup()
-
-# Create the faceted bar graph
-ggplot(gender_case_summary, aes(x = Sex, y = Total_Cases, fill = Sex)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
-  facet_wrap(~Country, scales = "free_y") + # Facet by country
-  scale_fill_manual(values = c("f" = "pink", "m" = "blue")) + # Optional: Gender-specific colors
-  labs(
-    title = "COVID Cases by Gender in Selected Countries",
-    x = "Gender",
-    y = "Number of Cases",
-    fill = "Gender"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    panel.spacing = unit(1, "lines") # Increase spacing between facets
-  )
-
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: deaths-by-sex
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries and group by gender and country
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
-gender_death_summary <- analysis_data %>%
-  filter(Country %in% selected_countries, Sex %in% c("f", "m")) %>% # Filter for selected countries and genders
-  group_by(Country, Sex) %>%
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Summarize total deaths by gender and country
-  ungroup()
-
-# Create the faceted bar graph
-ggplot(gender_death_summary, aes(x = Sex, y = Total_Deaths, fill = Sex)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
-  facet_wrap(~Country, scales = "free_y") + # Facet by country
-  scale_fill_manual(values = c("f" = "pink", "m" = "blue")) + # Optional: Gender-specific colors
-  labs(
-    title = "COVID Deaths by Gender in Selected Countries",
-    x = "Gender",
-    y = "Number of Deaths",
-    fill = "Gender"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    panel.spacing = unit(1, "lines") # Increase spacing between facets
-  )
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: cases-by-region
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries and group by region and country
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
-region_case_summary <- analysis_data %>%
-  filter(Country %in% selected_countries) %>% # Filter for selected countries
-  group_by(Country, Region) %>%
-  summarise(Total_Cases = sum(Cases, na.rm = TRUE)) %>% # Summarize total cases by region and country
-  ungroup()
-
-# Create the faceted bar graph
-ggplot(region_case_summary, aes(x = Region, y = Total_Cases, fill = Region)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
-  facet_wrap(~Country, scales = "free_y") + # Facet by country
-  labs(
-    title = "COVID Cases by Region in Selected Countries",
-    x = "Region",
-    y = "Number of Cases",
-    fill = "Region"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 12), # Rotate x-axis labels for readability
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    panel.spacing = unit(1, "lines") # Increase spacing between facets
-  )
-
-```
-
-```{r}
-#| echo: false
-#| eval: true
-#| label: deaths-by-region
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
-
-# Filter data for the selected 5 countries and group by region and country
-selected_countries <- c("Afghanistan", "Brazil", "Canada", "Denmark", "Egypt")
-region_death_summary <- analysis_data %>%
-  filter(Country %in% selected_countries) %>% # Filter for selected countries
-  group_by(Country, Region) %>%
-  summarise(Total_Deaths = sum(Deaths, na.rm = TRUE)) %>% # Summarize total deaths by region and country
-  ungroup()
-
-# Create the faceted bar graph
-ggplot(region_death_summary, aes(x = Region, y = Total_Deaths, fill = Region)) +
-  geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with totals
-  facet_wrap(~Country, scales = "free_y") + # Facet by country
-  labs(
-    title = "COVID Deaths by Region in Selected Countries",
-    x = "Region",
-    y = "Number of Deaths",
-    fill = "Region"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 12), # Rotate x-axis labels for readability
-    axis.title = element_text(size = 14),
-    strip.text = element_text(size = 14),
-    panel.spacing = unit(1, "lines") # Increase spacing between facets
-  )
-
-```
 
 # Discussion
 

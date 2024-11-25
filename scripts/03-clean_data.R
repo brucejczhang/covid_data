@@ -15,7 +15,7 @@ library(tidyverse)
 
 # Step 1: Remove unnecessary columns (if applicable)
 data_cleaned <- simulated_data %>%
-  select(Country, Region, Date, Sex, Age, Cases, Deaths)
+  select(Country, Region, Date, Sex, Age, Cases, Deaths, Tests)
 
 # Step 2: Handle missing values
 # Replace missing numeric values with 0 (if appropriate)
@@ -31,12 +31,6 @@ data_cleaned <- data_cleaned %>%
   mutate(
     # Ensure Date is in proper date format
     Date = as.Date(Date, format = "%d.%m.%Y"),
-    
-    # Extract year as a numeric variable
-    Year = as.numeric(format(Date, "%Y")),
-    
-    # Convert Date into a continuous variable (number of days since 1970-01-01)
-    Date_Continuous = as.numeric(Date)
   )
 
 
