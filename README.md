@@ -4,17 +4,20 @@
 
 This repo provides students with a foundation for their own projects associated with *Telling Stories with Data*. You do not need every aspect for every paper and you should delete aspects that you do not need.
 
+## Statement on Raw Data
+
+The raw data used for this repo was too large to be added as part of the pacakge. The data was obtained from COVerAGE-DB from Open Science Framework (OSF) and can be downloaded at https://osf.io/43ucn.
 
 ## File Structure
 
 The repo is structured as:
 
--   `data/raw_data` contains the raw data as obtained from COVerAGE-DB from Open Science Framework (OSF) [@covid_data].
+-   `data/raw_data` contains the raw data as obtained from COVerAGE-DB from Open Science Framework (OSF).
 -   `data/analysis_data` contains the cleaned dataset that was constructed and cleaned for the purpose of this analysis. 
 -   `model` contains fitted models. 
 -   `other` contains relevant literature, details about LLM chat interactions, and sketches.
 -   `paper` contains the files used to generate the paper, including the Quarto document and reference bibliography file, as well as the PDF of the paper. 
--   `scripts` contains the R scripts used to simulate, download and clean data.
+-   `scripts` contains the R scripts used to simulate, download, and clean data.
 
 
 ## Statement on LLM usage
