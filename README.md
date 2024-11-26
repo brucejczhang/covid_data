@@ -16,7 +16,6 @@ The data highlighted demographic data on people who were classified as COVID-19 
 
 The repo is structured as:
 
--   `data/raw_data` contains the raw data as obtained from COVerAGE-DB from Open Science Framework (OSF).
 -   `data/analysis_data` contains the cleaned dataset that was constructed and cleaned for the purpose of this analysis. 
 -   `model` contains fitted models. 
 -   `other` contains relevant literature, details about LLM chat interactions, and sketches.
@@ -27,11 +26,3 @@ The repo is structured as:
 ## Statement on LLM usage
 
 Aspects of the code for figure creation and testing were generated under the guidance of generative AI tool ChatGPT. The entire chat history is available in other/llms_usage/usage.txt.
-
-## Some checks
-
-- [ ] Change the rproj file name so that it's not starter_folder.Rproj
-- [ ] Change the README title so that it's not Starter folder
-- [ ] Remove files that you're not using
-- [ ] Update comments in R scripts
-- [ ] Remove this checklist
