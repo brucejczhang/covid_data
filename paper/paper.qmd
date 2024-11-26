@@ -393,7 +393,7 @@ ggplot(filtered_data, aes(x = Predicted_Probability, fill = Region)) +
   geom_density(alpha = 0.6) + # Density plot for predicted probabilities
   facet_wrap(~Region, scales = "free") + # Separate density plots by region
   labs(
-    title = "Density of Predicted Probability of High Risk by Region",
+    title = "",
     x = "Predicted Probability of High Risk",
     y = "Density"
   ) +
