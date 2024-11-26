@@ -16,10 +16,19 @@ library(dplyr)
 library(caret)
 library(pROC)
 
+
 # Building a logistic regression model for predicted high risk and age
+# Step 0: Define High_Risk variable in the dataset
+analysis_data <- analysis_data %>%
+  mutate(
+    Death_Rate = Deaths / (Cases + 1e-6), # Calculate death rate (avoid division by zero)
+    Log_CFR = log(CFR + 1),
+    High_Risk = ifelse(Death_Rate > median(Death_Rate, na.rm = TRUE), 1, 0) # Classify high-risk regions
+  )
+
 # Step 1: Build the logistic regression model
 logistic_model <- glm(
-  High_Risk ~ Age + Region + Sex,  # Replace with relevant predictors
+  High_Risk ~ Age + Region + Sex + Cases, # Replace with relevant predictors
   data = analysis_data,
   family = binomial()
 )
@@ -101,7 +110,7 @@ filtered_data <- analysis_data %>%
 
 # Step 2: Fit Logistic Regression Model
 logistic_model <- glm(
-  High_Risk ~ Tests + Sex + Age,  # Predictors: Tests, Sex, Age
+  High_Risk ~ Tests + Sex + Age + Cases,  # Predictors: Tests, Sex, Age
   family = binomial(),
   data = filtered_data
 )
@@ -159,7 +168,7 @@ filtered_data <- analysis_data %>%
 
 # Step 2: Fit Logistic Regression Model
 logistic_model <- glm(
-  High_Risk ~ Tests + Region + Age,  # Predictors: Tests, Region, Age
+  High_Risk ~ Tests + Region + Age + Cases,  # Predictors: Tests, Region, Age
   family = binomial(),
   data = filtered_data
 )
@@ -204,3 +213,6 @@ ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region))
 
 # Step 6: Save the Model for Reproducibility
 saveRDS(logistic_model, file = "models/logistic_model_region_high_risk.rds")
+
+write.csv(analysis_data, "data/02-analysis_data/modeling_data.csv", row.names = FALSE)
+

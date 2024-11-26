@@ -1,13 +1,17 @@
 ---
 title: "Number of COVID-19 Cases in Canada By Region, Age, and Sex"
-subtitle: "Predicting the Factors that Influence the Number of COVID-19 Cases and Deaths"
+subtitle: "Predicting the Factors that Influence the Probability of High Risk of COVID-19"
 author: 
   - Bruce Zhang
 thanks: "Code and data are available at: [https://github.com/brucejczhang/covid_data](https://github.com/brucejczhang/covid_data)."
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
+abstract: "This paper examines the demographic and regional factors influencing high-risk classifications for COVID-19 in Canada using logistic regression models, with predictors including age, sex, and region. The analysis reveals that rural regions, males, and specific age intervals exhibit higher probabilities of being classified as high risk, emphasizing disparities in healthcare access and outcomes. These findings highlight the importance of targeted public health interventions, such as resource allocation and vaccination prioritization, to mitigate these risks and can potentially guide interventions for future pandemics. By identifying key predictors and their implications, this study provides a scalable framework for improving pandemic preparedness and understanding health disparities."
 format: pdf
+toc: true
+toc-depth: 3
+include-before:
+  - \newpage
 number-sections: true
 bibliography: references.bib
 ---
@@ -25,7 +29,7 @@ library(here)
 # Load the dataset
 analysis_data <- read.csv(here("data/02-analysis_data/analysis_data.csv"))
 ```
-
+\newpage
 # Introduction
 
 The COVID-19 pandemic is something that is difficult to forget. Although it is now in the past, the effects that it had on society and how we function as individuals is still profound. At the same time, the statistical information that sprouted from the pandemic has a high value for analysis. This is not only to better understand the pandemic and how it affected populations but also to form a strong idea of its patterns to suggest tactics for dealing with pandemics shall something similar happen in the future.
@@ -36,11 +40,11 @@ This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the di
 
 The analysis focuses on the outcome variable of predicted probability of high risk, which is a function of number of cases and number of deaths per datapoint and is further defined in @sec-model. The model predicts the probability of high risk as a result of a series of predictor variables including region, sex, and age of the reported data. 
 
-Results paragraph (what was found?)
+The analysis revealed that there are disparities in the risk of severe COVID-19 outcomes across demographic and regional categories. Logistic regression models demonstrated that individuals in rural regions consistently faced higher probabilities of being classified as high risk, with males and specific age intervals further amplifying this vulnerability. These findings were supported by consistent trends in summary statistics and model visualizations, which revealed the interplay between predictors such as age, region, and sex in influencing COVID-19 outcomes.
 
-Why it matters paragraph (why it matters?)
+Understanding the drivers of COVID-19 severity can craft equitable and effective public health responses. By identifying which demographic and regional groups face the greatest risks, the results of the analysis can guide resource distribution, including vaccination programs and medical support, to areas where they are most needed. These are applicable not only to COVID-19 but also to future public health challenges.
 
-The remainder of this paper is structured as follows. @sec-data highlights the characteristics of the dataset. The section summarizes the data through a series of summary statistics (@fig-summary) and represents the data in a visual way where specific trends and patterns can be observed (@fig-cases_over_time, @fig-cfr). @sec-model creates a logistic regression model predicting the probability of high risk depending on the region, sex, and age of the data point. The section includes model figures that display the predicted probabilities of high risk for the predictor variables respectively. 
+The remainder of this paper is structured as follows. The data section (@sec-data) highlights the characteristics of the dataset. The section summarizes the data through a series of summary statistics (@fig-summary) and represents the data in a visual way where specific trends and patterns can be observed (@fig-cases_over_time, @fig-cfr). The model section (@sec-model) creates a logistic regression model predicting the probability of high risk depending on the region, sex, and age of the data point. This section presents the mathematical basis of the model and justifies the selection for the logistic regression model over others. The results section (@sec-results) includes model figures that display the predicted probabilities of high risk for the predictor variables respectively. The discussion section (@sec-discussion) goes over how the results from the modeling can be interpreted in the context of the real world and how these findings can be utilized to advise public health measures. It also discusses limitations of the analysis and future directions. 
 
 
 # Data {#sec-data}
@@ -54,7 +58,7 @@ I use the statistical programming language R [@citeR] to analyze the data and to
 
 The dataset used in this analysis was gathered by COVerAGE-DB, a database that focuses on COVID related data. COVerAGE-DB often gathers data relating to COVID such as the number of cases, deaths, tests, and vaccinations through governmental institutes such as health ministries and statistical offices. This data is then organized by other variables such as sex, region, country, and age and presented to the general public. 
 
-Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
+The dataset reflects a transformation of real-world phenomena—COVID-19 cases, deaths, and testing rates—into structured entries that can be analyzed. Each entry in the dataset represents aggregated information collected from health departments, governmental organizations, and research institutions worldwide. These organizations report COVID-19 statistics at varying levels of granularity, such as daily case counts or weekly summaries, which are then standardized and compiled into the dataset. This collective and comprehensive effort of data collection allows the real-world challenges of facing COVID-19 to be transformed into quantitative measures that can be analyzed and modeled. 
 
 ## Data Cleaning
 
@@ -215,6 +219,9 @@ ggplot(aggregated_data, aes(x = Age_Group, y = CFR, fill = Sex)) +
     y = "CFR (%)",
     fill = "Sex"
   ) +
+  scale_fill_manual(
+    values = c("m" = "steelblue", "f" = "pink") # Specify colors for "m" and "f"
+  ) +
   theme_minimal() +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for readability
@@ -258,7 +265,7 @@ region_cfr_summary <- analysis_data %>%
 # Create the faceted bar graph for CFR by region
 ggplot(region_cfr_summary, aes(x = Region, y = CFR, fill = Region)) +
   geom_bar(stat = "identity", alpha = 0.8, color = "black") + # Bar plot with CFR
-  scale_fill_manual(values = c("Urban" = "steelblue", "Rural" = "forestgreen")) + # Optional: Region-specific colors
+  scale_fill_manual(values = c("Urban" = "lightgreen", "Rural" = "yellow")) + # Optional: Region-specific colors
   labs(
     title = "",
     x = "Region",
@@ -282,7 +289,7 @@ The goal of our modelling strategy is twofold. Firstly,...
 
 Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
 
-## Model set-up
+## Model set-up {#sec-model_setup}
 
 A logistic model has been selected as part of this analysis to examine the relationship between region, sex, age, and the number of cases and deaths of COVID-19. 
 
@@ -293,11 +300,11 @@ The CFR is calculated as:
 \text{CFR} = \frac{\text{Deaths}}{\text{Cases} + 10^{-6}} \times 100
 \end{align}
 
-The \textbf{box-and-whisker plot} visualizes the distribution of predicted probabilities (\( p \)) across different \textbf{age intervals}. Each box represents the interquartile range (IQR) of predicted probabilities, with the line inside the box indicating the median predicted probability for that age interval. Whiskers extend to 1.5 times the IQR, and any points outside this range are considered outliers. This visualization highlights the variability of predicted probabilities within each age group.
+The box-and-whisker plot visualizes the distribution of predicted probabilities (\( p \)) across different age intervals. Each box represents the interquartile range (IQR) of predicted probabilities, with the line inside the box indicating the median predicted probability for that age interval. Whiskers extend to 1.5 times the IQR, and any points outside this range are considered outliers. This visualization highlights the variability of predicted probabilities within each age group.
 
 The logistic regression model equation is:
 \begin{align}
-\text{logit}(p) = \ln\left(\frac{p}{1 - p}\right) = \beta_0 + \beta_1 \cdot \text{Tests} + \beta_2 \cdot \text{Age Interval} + \epsilon
+\text{logit}(p) = \ln\left(\frac{p}{1 - p}\right) = \beta_0 + \beta_1 \cdot \text{Tests} + \beta_2 \cdot \text{Age} + \beta_3 \cdot \text{Region} + \epsilon
 \end{align}
 
 
@@ -313,26 +320,46 @@ where:
 
 This model explains how testing rates and age intervals affect the likelihood of a region or demographic being classified as high risk. The box-and-whisker plot shows the variability of predicted probabilities across age groups, helping to identify specific age intervals with consistently higher or lower risks.
 
+We run the model in R [@citeR] using the 'pROC' [@pROC] and 'caret [@caret] packages to construct and test the model. 
 
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+## Model justification {#sec-model_justification}
 
+For the analysis, a logistic regression model was chosen to predict the probability of a region or individual being classified as "high risk" based on key predictors such as age, sex, region, and the number of COVID-19 tests conducted. Logistic regression is particularly well-suited for this dataset because the outcome variable, high risk, is binary (e.g., classified as high risk or not). This makes logistic regression the most appropriate modeling technique as it directly estimates the probability of the binary outcome through the log-odds transformation. Compared to other models like linear regression, logistic regression avoids the issue of nonsensical predictions, such as probabilities below 0 or above 1, ensuring the interpretability of the results. Most importantly, logistic regression can handle both categorical and continuous predictors effectively. For this particular dataset, the key predictor variables are all categorical, even age is categorized by intervals. Therefore, it was extremely necessary for the model to be able to handl categorical data, which the logistic regression model is capable of. 
 
-### Model justification
+Another key advantage of the logistic regression model in this context is that it provides interpretable coefficients, which allow for an understanding of how specific predictors influence the odds of being high risk. This interpretability is crucial for public health applications, where stakeholders need clear and actionable insights. Furthermore, logistic regression is computationally efficient, making it ideal for datasets with relatively straightforward structures like this one. Thus, the logistic regression model strikes an appropriate balance between accuracy, interpretability, and simplicity, making it the most suitable choice for this analysis.
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
+The details on model selection can be found in the appendix in @sec-appendixb
 
-We can use maths by including latex between dollar signs, for instance $\theta$.
+## Assumptions and Limitations
+
+The logistic regression model assumes that observations within the dataset are independent, meaning that each data point does not influence others. However, this assumption could be violated if individuals within the same region share similar environmental, healthcare, or socioeconomic factors that contribute to their risk classification. Additionally, the model assumes that the predictors, such as age, sex, and region, are not highly correlated. Significant multicollinearity between these variables could undermine the stability of the model coefficients and reduce interpretability. Finally, the classification of "high risk" as regions or individuals exceeding the median death rate simplifies a complex phenomenon. This threshold may fail to capture subtler variations in risk factors across different demographic and geographic contexts.
+
+One key limitation of logistic regression is its inability to account for nuanced interactions between predictors without explicitly adding interaction terms. For instance, the combined effects of age and sex on risk may not be fully captured in this model. Additionally, the model assumes a predefined functional form, which limits its flexibility in identifying nonlinear relationships between predictors and outcomes. As a result, more complex patterns in the data may remain undetected, suggesting the need for alternative modeling approaches such as random forests or decision trees in future studies.
+
+## Model Validation
+
+For the model validation process of the selected logistic regression model, multiple validation techniques were used. Firstly, a ROC curve was constructed to visualize the trade-off between sensitivity and specificity. The ROC curve showed a high curve that deviated from the linear line representing random chance between sensitivity and specificity. The AUC value accompanying the ROC curve was above 0.8 for all three prediction models constructed for different variables. 
+
+A confusion matrix was also constructed to assess classification accuracy, precision, and recall by comparing the predicted classes to the actual outcomes. Values of above 0.75 were yielded for the accuracy rating. Lastly, the odds ratios with confidence intervals provided insights into the strngth and direction of the predictors' effects. 
+
+In general, these results demonstrated the suitability and strong effect that the logistic regression model has to predict probability of high risk based on the data. 
+
+Details of the model validation are provided in the appendix (@sec-appendixc). 
+
 
 # Results {#sec-results}
 
-Our results are summarized in @tbl-modelresults.
+The results of this analysis are summarized in @fig-model_region, @fig-model_sex, and @fig-model_age to give an all-rounded picture of the predicted probability of high risk based on the different predictor variables. 
+
+## Predicted Probability of High Risk by Region
 
 ```{r}
-#| label: model-risk_urban_vs_rural
+#| label: fig-model_region
 #| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural)
 #| echo: false
 #| warning: false
 #| message: false
+#| results: 'hide'
 
 # Load necessary libraries
 library(dplyr)
@@ -349,7 +376,7 @@ filtered_data <- analysis_data %>%
 # Step 2: Logistic Regression Model
 # Fit a logistic regression model
 logistic_model <- glm(
-  High_Risk ~ Tests + Region + Age,
+  High_Risk ~ Sex + Region + Age + Cases,
   family = binomial(),
   data = filtered_data
 )
@@ -361,26 +388,36 @@ summary(logistic_model)
 filtered_data <- filtered_data %>%
   mutate(Predicted_Probability = predict(logistic_model, type = "response"))
 
-# Step 4: Visualize the Results
-# Plot predicted probabilities by region
-ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region)) +
-  geom_boxplot(alpha = 0.6) +
+# Visualization with Density Plots
+ggplot(filtered_data, aes(x = Predicted_Probability, fill = Region)) +
+  geom_density(alpha = 0.6) + # Density plot for predicted probabilities
+  facet_wrap(~Region, scales = "free") + # Separate density plots by region
   labs(
-    title = "",
-    x = "Region",
-    y = "Predicted Probability of High Risk"
+    title = "Density of Predicted Probability of High Risk by Region",
+    x = "Predicted Probability of High Risk",
+    y = "Density"
+  ) +
+  scale_fill_manual(
+    values = c("Urban" = "lightgreen", "Rural" = "yellow") 
   ) +
   theme_minimal()
 
-
 ```
 
+@fig-model_region models the predicted probability of high risk for different regions, urban or rural. This is represented by a faceted density plot.
+
+Based on these results, the predicted probability of high risk is higher in rural areas than urban areas and the predicted probability of low risk is higher in urban areas than rural. This is indicated by the height of the peaks at the higher and lower end of the scale, where the peaks for urban regions are taller at the lower end of the probability of high risk scale and shorter at the higher end. The height of the peaks indicate the density of datapoints that fall around the respective predicted value. 
+
+\newpage
+## Predicted Probability of High Risk by Sex
+
 ```{r}
-#| label: model-risk_sex
+#| label: fig-model_sex
 #| fig-cap: Predicted probability of high risk based on sex
 #| echo: false
 #| warning: false
 #| message: false
+#| results: 'hide'
 
 # Load necessary libraries
 library(dplyr)
@@ -397,7 +434,7 @@ filtered_data <- analysis_data %>%
 # Step 2: Logistic Regression Model
 # Fit a logistic regression model
 logistic_model <- glm(
-  High_Risk ~ Tests + Sex + Age,
+  High_Risk ~ Sex + Sex + Age + Cases,
   family = binomial(),
   data = filtered_data
 )
@@ -418,16 +455,24 @@ ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
     x = "Sex",
     y = "Predicted Probability of High Risk"
   ) +
+  scale_fill_manual(
+    values = c("m" = "steelblue", "f" = "pink") # Specify colors for "m" and "f"
+  ) +
   theme_minimal()
 
 ```
 
+@fig-model_sex compares the predicted probability of high risk based on biological sex, representing the model in a similar box-and-whiskers plot method. As shown in the figure, males (represented by 'm') have a noticeably higher predicted probability of high risk than females (represented by 'f'). The predicted probability of a male qualifying as high risk for COVID-19 is above 50%, while the number is below 50% for females. 
+
+## Predicted Probability of High Risk by Age Interval
+
 ```{r}
-#| label: model-risk_age
+#| label: fig-model_age
 #| fig-cap: Predicted probability of high risk based on age intervals
 #| echo: false
 #| warning: false
 #| message: false
+#| results: 'hide'
 
 # Load necessary libraries
 library(dplyr)
@@ -446,7 +491,7 @@ filtered_data <- analysis_data %>%
 # Step 2: Logistic Regression Model
 # Fit a logistic regression model
 logistic_model <- glm(
-  High_Risk ~ Tests + Age_Interval,
+  High_Risk ~ Sex + Region + Age_Interval + Cases,
   family = binomial(),
   data = filtered_data
 )
@@ -458,64 +503,283 @@ summary(logistic_model)
 filtered_data <- filtered_data %>%
   mutate(Predicted_Probability = predict(logistic_model, type = "response"))
 
-# Step 4: Visualize the Results
-# Plot predicted probabilities by age interval
-ggplot(filtered_data, aes(x = Age_Interval, y = Predicted_Probability, fill = Age_Interval)) +
-  geom_boxplot(alpha = 0.6) +
+# Compute Median Predicted Probabilities
+median_data <- filtered_data %>%
+  group_by(Age_Interval) %>%
+  summarise(Median_Probability = median(Predicted_Probability, na.rm = TRUE))
+
+# Visualization with Median Bar Plot (Single Color and No Legend)
+ggplot(median_data, aes(x = Age_Interval, y = Median_Probability)) +
+  geom_bar(stat = "identity", fill = "steelblue", alpha = 0.8) + # All bars have the same color
+  geom_text(aes(label = round(Median_Probability, 2)), vjust = -0.5) + # Add value labels
   labs(
     title = "",
     x = "Age Interval",
-    y = "Predicted Probability of High Risk"
+    y = "Median Predicted Probability of High Risk"
   ) +
+  ylim(0, 0.65) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotate x-axis labels for readability
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1), # Rotate x-axis labels for readability
+    legend.position = "none" # Remove the legend
+  )
 
 ```
 
+@fig-model_age shows the predicted probability of high risk for different age groups. The age groups are intervals of 10 from 0 to 100 as classified by the original dataset. As shown in the figure, age intervals 10 to 20 and 30 to 40 have a significantly higher predicted probability of high risk than other age groups. This means that it is more likely (around 55% and 57% chance) that someone within these age ranges will qualify as a high risk than the other age groups. The age group with the lowest predicted probability of high risk is 0 to 10 year-olds, yielding a 38% chance median of being predicted as high risk. 
 
 
+# Discussion {#sec-discussion}
 
+## Interpreting High Risk Predictions {#sec-firstpoint}
 
+The results of this analysis reveal critical insights into how demographic and regional factors influence the likelihood of being classified as high risk for COVID-19. The logistic regression model, designed to predict the probability of high risk, effectively highlighted the relative importance of age, sex, and region in shaping these probabilities. Notably, rural regions consistently showed higher predicted probabilities of high risk compared to urban regions. This disparity underscores the challenges faced by rural areas, such as limited access to healthcare infrastructure, which may contribute to higher case fatality rates (CFR).
 
+Similarly, the analysis revealed that males are more likely to be classified as high risk than females, aligning with previous research suggesting that biological differences, comorbidities, and health-seeking behaviors could account for this discrepancy. Age also played a pivotal role, with certain age intervals, such as 10–20 and 30–40, showing significantly higher probabilities of high risk. This pattern may reflect complex interactions between behavioral, immunological, and societal factors influencing COVID-19 outcomes. Understanding these relationships is crucial for tailoring public health interventions and resource allocation strategies.
 
+## Key Future Implications {#sec-secondpoint}
 
-# Discussion
+The findings of this study have implications for future pandemic preparedness and response. By identifying demographic and regional factors associated with higher probabilities of high risk, policymakers can develop targeted interventions to mitigate disparities. For example, enhancing healthcare infrastructure in rural areas and prioritizing vaccination and testing campaigns for high-risk groups can help reduce the impact of future pandemics.
 
-## First discussion point {#sec-first-point}
+Additionally, the use of logistic regression models to predict high-risk classifications provides a robust framework for decision-making. This approach could be extended to other diseases or health outcomes, offering a scalable and interpretable method for public health planning. The analysis also highlights the importance of maintaining high-quality, standardized datasets to facilitate cross-regional and cross-demographic comparisons.
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this.
+## Limitations {#sec-thirdpoint}
 
-## Second discussion point
+Despite its strengths, this study has several limitations that should be addressed in future research. First, the analysis is limited to Canada, which may restrict the generalizability of the findings to other countries with different healthcare systems, cultural contexts, or pandemic responses. Second, the dataset used for this analysis only includes data from 2022, which may not capture temporal variations in COVID-19 patterns. Future studies could incorporate longitudinal data to examine how the predictors of high risk evolve over time.
 
-Please don't use these as sub-heading labels - change them to be what your point actually is.
+Another limitation is the reliance on aggregate data, which may obscure individual-level variability and interactions. For example, the interplay between age, sex, and comorbidities at the individual level could yield more nuanced insights. Additionally, the classification of rural and urban regions may oversimplify the diversity within these categories, such as the distinction between suburban and remote rural areas.
 
-## Third discussion point
+Thirdly, the data obtained for COVID-19 is obviously in the past and no longer an issue that is of primary concern. This issue is in line with the generalizability issue due to limited surveying countries. The patterns and models may be limited in generalizability due to the sole focus on COVID-19. 
 
-## Weaknesses and next steps
+## Next Steps {#sec-fourthpoint}
 
-Weaknesses and next steps should also be included.
+Building on the findings of this study, future research should explore several directions. First, expanding the analysis to include additional countries or regions would provide a more comprehensive understanding of the factors influencing COVID-19 outcomes. Second, incorporating additional variables, such as socioeconomic status, vaccination rates, and comorbidities, could enhance the predictive power of the models.
+
+Another next step that could be taken is to use the analysis and modeling on a broader series of pandemics and diseases such as seasonal flues, SARS outbreak in the 2000s, and others that may show similar trends. This will allow a broader generalizability of the demographic patterns and allow the model to better predict probability of high risk based on demographic data. Finally, public health practitioners and researchers should collaborate to ensure that findings are translated into actionable policies and interventions, bridging the gap between data analysis and real-world impact.
 
 \newpage
 
 \appendix
 
-# Appendix {.unnumbered}
+# Appendix {#sec-appendix}
 
-# Additional data details
+## Appendix A: Survey and Sampling Details {#sec-appendixa}
 
-# Model details {#sec-model-details}
+The dataset used in this analysis is sourced from the COVerAGE-DB, a comprehensive repository of COVID-19 demographic data. The database compiles data from a diverse set of sources, including government health agencies, international organizations, and other reputable institutions, ensuring a broad representation of regions and demographics. Each entry in the dataset represents an aggregation of cases, deaths, and demographic information categorized by age, sex, and region.
 
-## Posterior predictive check
+### Collection Process
+
+Data collection follows a systematic approach. For primary sources, COVerAGE-DB retrieves data directly from official government dashboards, public health reports, and institutional publications (@cite-dowd2020). This ensures that the dataset reflects real-world phenomena with minimal distortion.
+
+The database ensures standardization by processing the raw data from various sources through rigorous standardization to ensure comparability. For example, age intervals are harmonized across sources to create a unified structure suitable for cross-regional analysis.
+
+The database also ensures quality Control through running automated checks and manual reviews to detect inconsistencies, missing values, and potential errors in data entry. Such measures are crucial given the heterogeneity in reporting standards across countries and regions.
+
+Lastly, the update frequency is ensured so the data is as relevant and recent as possible. The database is updated regularly to reflect new data releases, ensuring timeliness and relevance for ongoing research.
+
+### Sampling and Representativeness
+
+While the dataset covers a broad range of countries and regions, its representativeness depends on the completeness and accuracy of the underlying sources. For instance, regions with underdeveloped health reporting infrastructure might have lower data quality or incomplete records. Additionally, variations in testing capacity and reporting standards can introduce biases, particularly in the calculation of derived measures such as case fatality rates (CFR).
+
+### Observational Nature and Limitations
+
+The data is observational, collected without experimental controls. As a result, confounding factors such as healthcare system differences, socioeconomic disparities, and public health policies must be carefully considered when interpreting results (@cite-ioannidis2021). For instance, differences in testing rates across regions can influence the apparent number of cases and consequently impact measures like CFR.
+
+## Appendix B: Model Selection Details {#sec-appendixb}
+
+During the model selection process, model figures were generated for the linear regression model. As shown in @fig-appendixb, the data was difficult to represent and relationships were difficult to identify due to the categorical nature of the variables. This led to attempts to model the data in different ways. The second method that was attempted was using a logistic regression model, which was able to represent the data well and make predictions about high risk. These figures are shown within the @sec-results of the paper. 
 
 ```{r}
+#| label: fig-appendixb
+#| fig-cap: Linear Regression Model for dataset
+#| echo: false
+#| warning: false
+#| message: false
+#| results: 'hide'
+
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+set.seed(21)
+
+# Prepare the data by calculating CFR and filtering for valid rows
+filtered_data <- analysis_data %>%
+  mutate(CFR = (Deaths / Cases) * 100) %>% # Calculate CFR (%)
+  filter(!is.na(CFR)) # Remove rows with missing CFR
+
+# Fit a linear regression model
+linear_model <- lm(CFR ~ Age + Sex + Region, data = filtered_data)
+
+# Summary of the linear regression model
+summary(linear_model)
+
+# Visualize the model predictions vs actual CFR
+filtered_data <- filtered_data %>%
+  mutate(Predicted_CFR = predict(linear_model, newdata = filtered_data))
+
+ggplot(filtered_data, aes(x = Predicted_CFR, y = CFR)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(
+    title = "Predicted vs Actual CFR (Linear Regression)",
+    x = "Predicted CFR",
+    y = "Actual CFR"
+  ) +
+  theme_minimal()
 
 ```
 
-## Diagnostics
+## Appendix C: Model Validation Details {#sec-appendixc}
+
+### ROC Curve and AUC
 
 ```{r}
+#| label: fig-appendix_roc
+#| fig-cap: ROC Curve and AUC Value for Logistic Regression Model
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load necessary libraries
+library(pROC)
+library(ggplot2)
+set.seed(21)
+
+analysis_data <- read.csv(here("data/02-analysis_data/modeling_data.csv"))
+
+# Ensure High_Risk is binary (convert if necessary)
+analysis_data <- analysis_data %>%
+  mutate(High_Risk = as.numeric(as.character(High_Risk)))
+
+# Generate the ROC curve
+roc_curve <- roc(
+  response = analysis_data$High_Risk,  # True labels
+  predictor = analysis_data$Predicted_Probability  # Predicted probabilities
+)
+
+# Calculate AUC
+auc_value <- auc(roc_curve)
+
+# Plot the ROC curve
+roc_plot <- ggplot() +
+  geom_line(data = data.frame(
+    specificity = rev(roc_curve$specificities),
+    sensitivity = rev(roc_curve$sensitivities)
+  ), aes(x = specificity, y = sensitivity), color = "blue", size = 1) +
+  labs(
+    title = "ROC Curve",
+    x = "Specificity",
+    y = "Sensitivity"
+  ) +
+  theme_minimal()
+
+# Display the AUC value
+cat("AUC:", auc_value, "\n")
+
+# Generate the ROC curve
+roc_curve <- roc(analysis_data$High_Risk, analysis_data$Predicted_Probability)
+auc_value <- auc(roc_curve)
+
+# Plot the ROC curve
+roc_plot <- ggplot() +
+  geom_line(
+    data = data.frame(
+      specificity = rev(roc_curve$specificities),
+      sensitivity = rev(roc_curve$sensitivities)
+    ),
+    aes(x = specificity, y = sensitivity),
+    color = "black", size = 1.2
+  ) +
+  geom_abline(linetype = "dashed", color = "red") + # Add the diagonal line
+  labs(
+    title = "",
+    x = "1 - Specificity",
+    y = "Sensitivity"
+  ) +
+  annotate("text", x = 0.7, y = 0.2, label = paste0("AUC = ", round(auc_value, 3)), size = 5, color = "black") +
+  theme_minimal() +
+  theme(
+    axis.title = element_text(size = 14),
+    plot.title = element_text(size = 16, face = "bold")
+  )
+
+# Print the plot in your script to display in the rendered document
+roc_plot
 
 ```
+
+
+### Confusion Matrix
+
+```{r}
+#| label: fig-appendix_confusion
+#| fig-cap: Confusion Matrix for Logistic Regression Model
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load necessary library
+library(caret)
+set.seed(21)
+
+# Step 1: Create Predicted Classes
+# Add a column with predicted classes based on a 0.5 threshold
+analysis_data <- analysis_data %>%
+  mutate(
+    Predicted_Class = ifelse(Predicted_Probability >= 0.5, 1, 0) # Classify as High Risk (1) if probability >= 0.5
+  )
+
+# Step 2: Generate Confusion Matrix
+# Convert classes to factors for compatibility
+actual_classes <- factor(analysis_data$High_Risk, levels = c(0, 1))
+predicted_classes <- factor(analysis_data$Predicted_Class, levels = c(0, 1))
+
+# Create confusion matrix
+conf_matrix <- confusionMatrix(predicted_classes, actual_classes)
+
+# Step 3: Print Confusion Matrix
+print(conf_matrix)
+
+```
+
+### Odds Ratio with Confidence Intervals
+
+```{r}
+#| label: fig-odds_ratio
+#| fig-cap: Odds Ratio table with Confidence Intervals
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load necessary libraries
+library(broom)
+library(knitr)
+library(dplyr)
+set.seed(21)
+
+# Step 1: Compute Odds Ratios and Confidence Intervals
+# Use `tidy()` to extract model coefficients and calculate odds ratios
+odds_ratios <- tidy(logistic_model, conf.int = TRUE, exponentiate = TRUE)
+
+# Step 2: Format the Table for Better Display
+# Rename columns for better readability
+odds_ratios <- odds_ratios %>%
+  rename(
+    Predictor = term,
+    Odds_Ratio = estimate,
+    Lower_95CI = conf.low,
+    Upper_95CI = conf.high
+  )
+
+# Step 3: Display the Table using kable
+kable(
+  odds_ratios,
+  col.names = c("Predictor", "Odds Ratio", "Standard Error", "Statistic", "P Value", "Lower 95% CI", "Upper G5% CI"), 
+  booktabs = TRUE,
+  digits = 3
+)
+```
+
 
 \newpage
 
