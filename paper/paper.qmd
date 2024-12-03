@@ -37,7 +37,7 @@ The COVID-19 pandemic is something that is difficult to forget. Although it is n
 
 Studies have been done in recent years in attempts to utilize the data that was gathered during COVID times to better advise future preventions and treatment for pandemic situations. Many studies look into the relationship between demographic information of populations and their likelihood of getting diagnosed or fatality. One study found that communities on hillsides and other locations with enhanced ventilation and oxygen had reduced numbers of COVID cases [@cite-covid_demographics]. Other studies have found relationships between exercise and cardiovascular function and the likelihood of getting COVID [@cite-cardio_and_covid]. Although many relationships have been examined, there has been a lack of studies focusing on a broad set of demographic traits such as age and sex. There has also not been cross comparisons of region and demographic aspects. Another area where research is needed is for country-specific analysis, particularly Canada. 
 
-This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the different population and individual-level demographic variables, such as age, sex, and region of life, influenced the risk of fatality from COVID-19. The paper uses the demographic data gathered from 2022 to predict the characteristics of populations and individuals that may be at higher risk of fatality once they have been diagnosed with COVID. 
+This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the different population and individual-level demographic variables, such as age, sex, and region of life, influenced the risk of fatality from COVID-19. The analysis focuses on isolating these demographic factors and examining their individual effects. The paper uses the demographic data gathered from 2022 to predict the characteristics of populations and individuals that may be at higher risk of fatality once they have been diagnosed with COVID. 
 
 One importance of this information to be present is mainly for Canada-specific situations and patterns that may not be seen in a global scale analysis. The geographic location, temperature, population distribution, ethnic diversity, and other features of Canada is incredibly unique. The patterns present in other countries cannot be generalized to a smaller scale. From a public health standpoint, global health data is key in understanding overarching trends of epidemiology, but country specific (sometimes community specific) analyses are key for creating predictions based on a suitably-sized dataset [@frumkin]. 
 
@@ -56,7 +56,7 @@ The remainder of this paper is structured as follows. The data section (@sec-dat
 
 ## Overview
 
-I use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], arrow [@arrow], DataExplorer [@dataexplorer], corrplot [@corrplot], caret [@caret], and pROC [@pROC]. My data [@covid_data] was obtained from COVerAGE-DB, which was housed in Open Science Framework. The data anlysis was conducted based on the guidance of @tellingstories.
+I use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], arrow [@arrow], DataExplorer [@dataexplorer], corrplot [@corrplot], caret [@caret], httr [@httr], here[@here], and pROC [@pROC]. My data [@covid_data] was obtained from COVerAGE-DB, which was housed in Open Science Framework. The data anlysis was conducted based on the guidance of @tellingstories.
 
 ## Measurement
 
@@ -458,7 +458,7 @@ ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
 
 ```{r}
 #| label: fig-model_age
-#| fig-cap: Predicted probability of high risk based on age intervals. The median predicted probability of high risk is shown as a decimal, where age intervals [20, 30) and [50, 60) have relatively higher predicted probabilities of high risk. 
+#| fig-cap: Predicted probability of high risk based on age intervals. The median predicted probability of high risk is shown as a decimal, where age intervals 20-30 and 50-60 have relatively higher predicted probabilities of high risk. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -838,7 +838,7 @@ conf_matrix <- confusionMatrix(predicted_classes, actual_classes)
 print(conf_matrix)
 
 ```
-
+\newpage
 ### Odds Ratio with Confidence Intervals
 
 ```{r}
@@ -876,6 +876,7 @@ kable(
   digits = 3
 )
 ```
+
 
 
 \newpage
