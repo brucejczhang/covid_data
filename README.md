@@ -1,4 +1,4 @@
-# Predicting COVID-19 Risk in Canada Based on Region, Sex, and Age
+# Predicting COVID-19 Risk in Canada Based on Region, Sex, and Age Data from 2022
 
 ## Overview
 
@@ -18,11 +18,11 @@ The repo is structured as:
 
 -   `data/analysis_data` contains the cleaned dataset that was constructed and cleaned for the purpose of this analysis. 
 -   `model` contains fitted models. 
--   `other` contains relevant literature, details about LLM chat interactions, and sketches.
+-   `other` contains relevant literature, details about LLM chat interactions, sketches, and datasheet. 
 -   `paper` contains the files used to generate the paper, including the Quarto document and reference bibliography file, as well as the PDF of the paper. 
--   `scripts` contains the R scripts used to simulate, download, and clean data.
+-   `scripts` contains the R scripts used to simulate, download, clean, and test data.
 
 
 ## Statement on LLM usage
 
-Aspects of the code for figure creation and testing were generated under the guidance of generative AI tool ChatGPT. The entire chat history is available in other/llms_usage/usage.txt.
+Aspects of the repo were genreated under the guidance of generative AI tool ChatGPT. The tool was specifically used for code for figure creation, testing, and reference formatting. The entire chat history is available in other/llms_usage/usage.txt.
