@@ -1,5 +1,5 @@
 ---
-title: "Number of COVID-19 Cases in Canada in 2022 By Region, Age, and Sex"
+title: "COVID-19 Cases and Deaths in Canada in 2022 By Region, Age, and Sex"
 subtitle: "Predicting the Factors that Influence the Probability of High Risk of COVID-19"
 author: 
   - Bruce Zhang
@@ -345,7 +345,7 @@ The results of this analysis are summarized in @fig-model_region, @fig-model_sex
 
 ```{r}
 #| label: fig-model_region
-#| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural). This is a density plot showing that the extremes of predicted probability of high risk are more frequent for both urban and rural regions. 
+#| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural). The density of probabilities of high risk shows that the extremes of predicted probability of high risk are more frequent for both urban and rural regions. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -403,7 +403,7 @@ Based on these results, the predicted probability of high risk is higher in rura
 
 ```{r}
 #| label: fig-model_sex
-#| fig-cap: Predicted probability of high risk based on sex. The box-and-whiskers plots show that the median value of the predicted probability of high risk is similar for males and females. There is a large IQR for both. 
+#| fig-cap: Predicted probability of high risk based on sex. The median value of the predicted probability of high risk is shown to be similar for males and females. There is a large IQR for both. 
 #| echo: false
 #| warning: false
 #| message: false
