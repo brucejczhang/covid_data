@@ -723,7 +723,7 @@ ggplot(filtered_data, aes(x = Predicted_CFR, y = CFR)) +
   theme_minimal()
 
 ```
-
+\newpage
 ## Appendix E: Model Validation Details {#sec-appendixc}
 
 ### ROC Curve and AUC
@@ -805,7 +805,7 @@ roc_plot
 
 ```
 
-
+\newpage
 ### Confusion Matrix
 
 ```{r}
