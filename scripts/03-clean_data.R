@@ -18,7 +18,7 @@ data_cleaned <- simulated_data %>%
   select(Country, Region, Date, Sex, Age, Cases, Deaths, Tests)
 
 # Step 2: Handle missing values
-# Replace missing numeric values with 0 (if appropriate)
+# Replace missing numeric values with 0
 data_cleaned <- data_cleaned %>%
   mutate(
     Cases = ifelse(is.na(Cases), 0, Cases),
@@ -45,14 +45,13 @@ data_cleaned <- data_cleaned %>%
     Deaths = as.numeric(Deaths),
   )
 
-# Remove duplicate rows (if any)
+# Step 5: Remove duplicate rows
 data_cleaned <- data_cleaned %>%
   distinct() %>%
   filter(Country == "Canada") %>%
   filter(Region %in% c("Urban", "Rural"), Sex %in% c("m", "f"))
 
-# Check for and handle outliers (optional)
-# For example, cap unrealistic values for 'Cases', 'Deaths', or 'Tests'
+# Step 6: Check for and handle outliers
 data_cleaned <- data_cleaned %>%
   mutate(
     Cases = ifelse(Cases > 100000, 100000, Cases),
@@ -63,8 +62,8 @@ data_cleaned <- data_cleaned %>%
 data_cleaned <- data_cleaned %>%
   filter(Deaths <= Cases)
 
-# Add calculated columns (if needed)
-# Example: Case Fatality Rate (CFR)
+# Step 7: Add calculated columns
+# Case Fatality Rate (CFR)
 data_cleaned <- data_cleaned %>%
   mutate(CFR = ifelse(Cases > 0, (Deaths / Cases) * 100, NA))
 

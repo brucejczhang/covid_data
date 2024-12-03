@@ -14,11 +14,9 @@ library(dplyr)
 library(ggplot2)
 library(corrplot) 
 library(DataExplorer) 
-
-# Set random seed for reproducibility
 set.seed(21)
 
-# Step 1: Load the data (make sure to change the file path to your actual dataset)
+# Step 1: Load the data
 analysis_data <- read_parquet(here("data", "02-analysis_data", "analysis_data.parquet"))
 
 # Step 2: Data Overview
@@ -34,7 +32,7 @@ summary_stats <- analysis_data %>%
   summary()
 
 # Step 3: Exploratory Visualizations
-# Histogram for distribution of numerical variables (e.g., Cases, Deaths, Tests)
+# Histogram for distribution of numerical variables
 ggplot(analysis_data, aes(x = Cases)) +
   geom_histogram(bins = 30, fill = "steelblue", color = "black", alpha = 0.7) +
   labs(title = "Distribution of Cases", x = "Cases", y = "Frequency")

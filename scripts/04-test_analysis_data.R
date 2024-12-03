@@ -15,11 +15,9 @@ library(dplyr)
 library(arrow)
 library(testthat)  # For unit testing
 
-# Step 1: Load the data
+# Load the data
 analysis_data_path <- "data/02-analysis_data/analysis_data.parquet"
 analysis_data <- read_parquet(analysis_data_path)
-
-#### Tests with `testthat` ####
 
 # Test 1: Check the basic structure of the dataset
 test_that("Dataset has the expected structure", {

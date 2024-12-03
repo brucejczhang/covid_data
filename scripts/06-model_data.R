@@ -8,9 +8,7 @@
   # - 03-clean_data.R must have been run
 # Any other information needed? Make sure you are in the `COVID_demographics` rproj
 
-# Install and load necessary pacakges/libraries
-install.packages("caret")
-install.packages("pROC")
+# Load necessary pacakges/libraries
 library(ggplot2)
 library(dplyr)
 library(caret)

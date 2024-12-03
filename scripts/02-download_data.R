@@ -49,10 +49,6 @@ cat(
 
 
 #### Save data ####
-# [...UPDATE THIS...]
-# change the_raw_data to whatever name you assigned when you downloaded it.
-Data <- read.csv(output_file)
-
 write_csv(Data, "data/01-raw_data/raw_data.csv") 
 
          

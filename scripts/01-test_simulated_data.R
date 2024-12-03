@@ -20,8 +20,6 @@ library(testthat)
 # Read the data
 analysis_data <- read_parquet("data/00-simulated_data/simulated_data.parquet")
 
-#### Tests with `testthat` ####
-
 # Test 1: Verify structure of the dataset
 test_that("Dataset has the expected structure", {
   expect_s3_class(analysis_data, "data.frame")  # Check that the dataset is a data frame
