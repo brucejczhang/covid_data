@@ -7,11 +7,11 @@
 # Pre-requisites: 
 # Any other information needed? Make sure you are in the `COVID_demographics` rproj
 
-install.packages("tidyr")
 # Load necessary libraries
 library(dplyr)
 library(tidyr)
 library(tidyverse)
+library(arrow)
 
 # Step 1: Remove unnecessary columns (if applicable)
 data_cleaned <- simulated_data %>%
@@ -72,4 +72,4 @@ data_cleaned <- data_cleaned %>%
 summary(data_cleaned)
 
 #### Save data ####
-analysis_data <- write_csv(data_cleaned, "data/02-analysis_data/analysis_data.csv")
+analysis_data <- write_parquet(data_cleaned, "data/02-analysis_data/analysis_data.parquet")

@@ -15,6 +15,7 @@ library(ggplot2)
 library(dplyr)
 library(caret)
 library(pROC)
+library(arrow)
 
 
 # Building a logistic regression model for predicted high risk and age
@@ -214,5 +215,5 @@ ggplot(filtered_data, aes(x = Region, y = Predicted_Probability, fill = Region))
 # Step 6: Save the Model for Reproducibility
 saveRDS(logistic_model, file = "models/logistic_model_region_high_risk.rds")
 
-write.csv(analysis_data, "data/02-analysis_data/modeling_data.csv", row.names = FALSE)
+write_parquet(analysis_data, "data/03-model_data/modeling_data.parquet")
 

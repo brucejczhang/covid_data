@@ -7,9 +7,9 @@
 # Pre-requisites: The `tidyverse` package must be installed
 # Any other information needed? Make sure you are in the `COVID_demographics` rproj
 
-
 #### Workspace setup ####
 library(tidyverse)
+library(arrow)
 set.seed(21)
 
 # Define parameters
@@ -41,4 +41,4 @@ simulated_data$Tests <- round(runif(nrow(simulated_data), min = 100, max = 50000
 head(simulated_data)
 
 #### Save data ####
-write_csv(simulated_data, "data/00-simulated_data/simulated_data.csv")
+write_parquet(simulated_data, "data/00-simulated_data/simulated_data.parquet")

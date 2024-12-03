@@ -1,5 +1,5 @@
 ---
-title: "Number of COVID-19 Cases in Canada By Region, Age, and Sex"
+title: "Number of COVID-19 Cases in Canada in 2022 By Region, Age, and Sex"
 subtitle: "Predicting the Factors that Influence the Probability of High Risk of COVID-19"
 author: 
   - Bruce Zhang
@@ -25,9 +25,10 @@ library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(here)
+library(arrow)
 
 # Load the dataset
-analysis_data <- read.csv(here("data/02-analysis_data/analysis_data.csv"))
+analysis_data <- read_parquet(here("data", "02-analysis_data", "analysis_data.parquet"))
 ```
 \newpage
 # Introduction
@@ -36,61 +37,50 @@ The COVID-19 pandemic is something that is difficult to forget. Although it is n
 
 Studies have been done in recent years in attempts to utilize the data that was gathered during COVID times to better advise future preventions and treatment for pandemic situations. Many studies look into the relationship between demographic information of populations and their likelihood of getting diagnosed or fatality. One study found that communities on hillsides and other locations with enhanced ventilation and oxygen had reduced numbers of COVID cases [@cite-covid_demographics]. Other studies have found relationships between exercise and cardiovascular function and the likelihood of getting COVID [@cite-cardio_and_covid]. Although many relationships have been examined, there has been a lack of studies focusing on a broad set of demographic traits such as age and sex. There has also not been cross comparisons of region and demographic aspects. Another area where research is needed is for country-specific analysis, particularly Canada. 
 
-This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the different population and individual-level variables, such as age, sex, and region of life, influenced the risk of being diagnosed with COVID and the risk of fatality. The paper uses the demographic data gathered from 2022 to predict the characteristics of populations and individuals that may be at higher risk of fatality once they have been diagnosed with COVID. This analysis may have broader implications for preventative measures for flues, other diseases, and pandemics in the future. 
+This analysis looks at COVID-19 data from 2022 in Canada and analyzes how the different population and individual-level demographic variables, such as age, sex, and region of life, influenced the risk of fatality from COVID-19. The paper uses the demographic data gathered from 2022 to predict the characteristics of populations and individuals that may be at higher risk of fatality once they have been diagnosed with COVID. 
 
-The analysis focuses on the outcome variable of predicted probability of high risk, which is a function of number of cases and number of deaths per datapoint and is further defined in @sec-model. The model predicts the probability of high risk as a result of a series of predictor variables including region, sex, and age of the reported data. 
+One importance of this information to be present is mainly for Canada-specific situations and patterns that may not be seen in a global scale analysis. The geographic location, temperature, population distribution, ethnic diversity, and other features of Canada is incredibly unique. The patterns present in other countries cannot be generalized to a smaller scale. From a public health standpoint, global health data is key in understanding overarching trends of epidemiology, but country specific (sometimes community specific) analyses are key for creating predictions based on a suitably-sized dataset [@frumkin]. 
+
+Another key importance of this analysis is its focus on basic demographic factors rather than specific health factors. It is often that a health issue, COVID-19, is examined through the lens of other health factors [@swanson_verdugo]. For example, how does the presence of another long-term disease influence the risk of COVID-19. Looking at surface level demographic information can provide information that is useful to a broader audience. Specific diseases may not be possessed by everyone, but demographic information is. This information is also known by individuals, which will help them identify the category they fall into and examine their risk of COVID-19 based on their demographic information. 
+
+The estimand of this analysis is the correlation between demographic information, including age, sex, and region, and the predicted probability of high risk for COVID-19. The analysis focuses on the outcome variable of predicted probability of high risk, which is a function of number of cases and number of deaths per datapoint and is further defined in @sec-model. The model predicts the probability of high risk as a result of a series of predictor variables including region, sex, and age of the reported data. 
 
 The analysis showed that there are disparities in the risk of severe COVID-19 outcomes across demographic and regional categories. Logistic regression models demonstrated that individuals in rural regions consistently faced higher probabilities of being classified as high risk, with males and specific age intervals further amplifying this vulnerability. These findings were supported by consistent trends in summary statistics and model visualizations, which showed the interplay between predictors such as age, region, and sex in influencing COVID-19 outcomes.
 
-Understanding the reasons behind COVID-19 severity can craft equitable and effective public health responses. By identifying which demographic and regional groups face the greatest risks, the results of the analysis can guide resource distribution, including vaccination programs and medical support, to areas where they are most needed. These are applicable not only to COVID-19 but also to future public health challenges.
+This analysis may have broader implications for preventative measures for flues, other diseases, and pandemics in the future. Understanding the reasons behind COVID-19 severity can craft equitable and effective public health responses. By identifying which demographic and regional groups face the greatest risks, the results of the analysis can guide resource distribution, including vaccination programs and medical support, to areas where they are most needed. These are applicable not only to COVID-19 but also to future public health challenges.
 
-The remainder of this paper is structured as follows. The data section (@sec-data) highlights the characteristics of the dataset. The section summarizes the data through a series of summary statistics (@fig-summary) and represents the data in a visual way where specific trends and patterns can be observed (@fig-cases_over_time, @fig-cfr). The model section (@sec-model) creates a logistic regression model predicting the probability of high risk depending on the region, sex, and age of the data point. This section presents the mathematical basis of the model and justifies the selection for the logistic regression model over others. The results section (@sec-results) includes model figures that display the predicted probabilities of high risk for the predictor variables respectively. The discussion section (@sec-discussion) goes over how the results from the modeling can be interpreted in the context of the real world and how these findings can be utilized to advise public health measures. It also discusses limitations of the analysis and future directions. 
+The remainder of this paper is structured as follows. The data section (@sec-data) highlights the characteristics of the dataset. The section summarizes the data through a series of summary statistics and represents the data in a visual way where specific trends and patterns can be observed. The model section (@sec-model) creates a logistic regression model predicting the probability of high risk depending on the region, sex, and age of the data point. This section presents the mathematical basis of the model and justifies the selection for the logistic regression model over others. The results section (@sec-results) includes model figures that display the predicted probabilities of high risk for the predictor variables respectively. The discussion section (@sec-discussion) goes over how the results from the modeling can be interpreted in the context of the real world and how these findings can be utilized to advise public health measures. It also discusses limitations of the analysis and future directions.
 
 
 # Data {#sec-data}
 
 ## Overview
 
-I use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], caret [@caret], and pROC [@pROC]. My data [@covid_data] was obtained from COVerAGE-DB, which was housed in Open Science Framework. The data anlysis was conducted based on the guidance of @tellingstories.
-
+I use the statistical programming language R [@citeR] to analyze the data and to create graphs and models. Th packages that were used include tidyverse [@tidyverse], tidyr [@tidyr], dplyr [@dplyr], arrow [@arrow], DataExplorer [@dataexplorer], corrplot [@corrplot], caret [@caret], and pROC [@pROC]. My data [@covid_data] was obtained from COVerAGE-DB, which was housed in Open Science Framework. The data anlysis was conducted based on the guidance of @tellingstories.
 
 ## Measurement
 
-The dataset used in this analysis was gathered by COVerAGE-DB, a database that focuses on COVID related data. COVerAGE-DB often gathers data relating to COVID such as the number of cases, deaths, tests, and vaccinations through governmental institutes such as health ministries and statistical offices. This data is then organized by other variables such as sex, region, country, and age and presented to the general public. 
+The data collection process is conducted by hospitals and governmental institutions that get first-handed numbers of COVID-19 patient information. Individuals who have symptoms and choose to visit a hospital will get tested, this number will be reported as the number of tests. Those that test positive for COVID-19 in the hospitals will be reported as the number of cases. Those who report deaths to the government level and indicate that the cause is due to COVID-19 will be recorded as the number of deaths due to COVID. 
 
-The dataset reflects a transformation of real-world phenomena—COVID-19 cases, deaths, and testing rates—into structured entries that can be analyzed. Each entry in the dataset represents aggregated information collected from health departments, governmental organizations, and research institutions worldwide. These organizations report COVID-19 statistics at varying levels of granularity, such as daily case counts or weekly summaries, which are then standardized and compiled into the dataset. This effort of data collection allows the real-world challenges of facing COVID-19 to be transformed into quantitative measures that can be analyzed and modeled. 
+The data that was collected through hopistals and government institutions was gathered by COVerAGE-DB, a database that focuses on COVID related data. COVerAGE-DB consolidates this information into the dataset that was used in the analysis. COVerAGE-DB often gathers data relating to COVID such as the number of cases, deaths, tests, and vaccinations through governmental institutes such as health ministries and statistical offices. This data is then organized by other variables such as sex, region, country, and age and presented to the general public. 
+
+The data collected through hospitals or governmental institutes only reflect individuals who have visited hospitals for their symptoms and tested positive for COVID-19 there. This poses a key limitation of potential inaccuracy of numbers due to the large portion of individuals who self-test PCR, visit PCR testing stations, or don't get tested and stay home despite having symptoms. These situations were common given the situation in Canada in 2022, where individuals were encouraged to stay home if symptoms were experienced rather than visit hospitals to report their results. 
+
+The dataset reflects a transformation of real-world phenomena—COVID-19 cases, deaths, and testing rates—into structured entries that can be analyzed. It also reflects the data collection challenges and biases of the real world, potentially understating values. Each entry in the dataset represents aggregated information collected from health departments, governmental organizations, and research institutions worldwide. These organizations report COVID-19 statistics at varying levels of granularity, such as daily case counts or weekly summaries, which are then standardized and compiled into the dataset. This effort of data collection allows the real-world challenges, as accurately as possible despite obvious limitations, of facing COVID-19 to be transformed into quantitative measures that can be analyzed and modeled. 
 
 ## Data Cleaning
 
-The original dataset contained data from five different countries including. For the purpose to focus on data in Canada for this analysis, the datapoints for other countries were removed. Further cleaning was done to remove any problematic datapoints such as when the number of deaths exceeded the number of cases. 
+The original dataset contained data from five different countries including. For the purpose to focus on data in Canada for this analysis, the datapoints for other countries were removed. This was the initial step in data cleaning. 
+
+Further data cleaning was undertaken to ensure the quality and integrity of the dataset. First, missing values were identified and handled by checking each column. Any missing values were flagged and removed. Second, the dataset was checked for duplicates to avoid redundant entries, ensuring each row represented a unique combination of key columns such as Country, Region, Date, and Age. Additionally, logical consistency checks were conducted to identify and correct any issues, such as negative values in Cases, Deaths, or Tests, or where Deaths exceeded Cases, which are not plausible in real-world data. Inconsistent or invalid values in categorical variables, such as Region or Sex, were also detected and addressed to match predefined valid categories. Finally, summary statistics and visualizations were generated to examine the distribution of numerical variables and detect any anomalies that could indicate data entry errors. 
 
 ## Outcome Variables and Predictor Variables
 
-The cleaned dataset contains variables including the country, region, date, sex, and age where the number of cases, deaths, and tests were reported. @fig-head_analysis_data shows a sample of the dataset, presenting the first six rows of the analysis data. The outcome variables highlighted include the total number of cases and the total number of deaths. 
-
-```{r}
-#| label: fig-head_analysis_data
-#| fig-cap: First six rows of the dataset after cleaning
-#| echo: false
-#| warning: false
-#| message: false
-
-# Load the necessary library
-library(knitr)
-
-# Display the first few rows of analysis_data
-head_table <- head(analysis_data)
-
-# Render the table with kable
-kable(
-  head_table,
-  booktabs = TRUE,  # Add better table styling
-)
-```
+The cleaned dataset contains variables including the country, region, date, sex, and age where the number of cases, deaths, and tests were reported. @sec-appendixraw shows a sample of the dataset, presenting the first six rows of the analysis data. The outcome variables highlighted include the total number of cases and the total number of deaths. 
 
 ```{r}
 #| label: fig-summary
-#| fig-cap: Summary Statistics of COVID-19 Cases in Canada
+#| fig-cap: Summary Statistics of COVID-19 Cases in Canada. The table shows the averages and totals of key numerical variables including age, cases, tests, and deaths. It also calculates the case fatality rate (CFR) as number of deaths divided by number of cases. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -138,7 +128,7 @@ The case fatality rate (CFR) is an additional aspect of the summary that was cal
 #| echo: false
 #| eval: true
 #| label: fig-cases_over_time
-#| fig-cap: "Number of cases per month in 2022 in Canada"
+#| fig-cap: Number of COVID-19 cases per month in 2022 in Canada. The red trend line highlights the pattern of COVID-19 cases by month in Canada throughout 2022. 
 #| warning: false
 
 # Load necessary libraries
@@ -184,7 +174,7 @@ The time of year can also be correlated with the likelihood of getting COVID-19 
 
 ```{r}
 #| label: fig-cfr
-#| fig-cap: Case Fatality Rate (CFR) by Age Group, Region, and Sex
+#| fig-cap: Case Fatality Rate (CFR) by Age Group, Region, and Sex. Urban and rural regions are separated into two subfigures, each characterizing male and females by color and displaying differences by age intervals. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -242,7 +232,7 @@ Age, sex, and region are key predictor variables that are examined in this analy
 #| echo: false
 #| eval: true
 #| label: fig-cfr_by_region
-#| fig-cap: "Case Fatality Rate (CFR) by Region in 2022 in Canada"
+#| fig-cap: "Case Fatality Rate (CFR) by Region in 2022 in Canada. CFR percentage is shown to be slightly higher in urban areas than rural areas."
 #| warning: false
 
 # Load necessary libraries
@@ -285,9 +275,9 @@ ggplot(region_cfr_summary, aes(x = Region, y = CFR, fill = Region)) +
 
 # Model {#sec-model}
 
-The goal of our modelling strategy is twofold. Firstly,...
+The primary goal of the model is to act as a tool for prediction for the level of high risk based on the characteristics of the specific datapoint. It can be used to identify how at risk a specific region, sex, or age group is for COVID-19 fatality. The mathematical definition of high risk is included in @sec-model_setup alongside a mathematical definition of CFR. Overall, the CFR is the number of deaths per cases while the high risk is when that level exceeds the median across the entire population. 
 
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
+The model described here is a logistic regression model. This was selected based on the binary and categorical nature of many predictor and outcome variables. Justification of this choice is included in @sec-model_justification and @sec-model_validation, with more details included in the appendix (@sec-appendixc). 
 
 ## Model set-up {#sec-model_setup}
 
@@ -330,13 +320,13 @@ Another key advantage of the logistic regression model in this context is that i
 
 The details on model selection can be found in the appendix in @sec-appendixb
 
-## Assumptions and Limitations
+## Assumptions and Limitations {#sec-model_assumptions}
 
 The logistic regression model assumes that observations within the dataset are independent, meaning that each data point does not influence others. However, this assumption could be violated if individuals within the same region share similar environmental, healthcare, or socioeconomic factors that contribute to their risk classification. Additionally, the model assumes that the predictors, such as age, sex, and region, are not highly correlated. Significant multicollinearity between these variables could undermine the stability of the model coefficients and reduce interpretability. Finally, the classification of "high risk" as regions or individuals exceeding the median death rate simplifies a complex phenomenon. This threshold may fail to capture subtler variations in risk factors across different demographic and geographic contexts.
 
 One key limitation of logistic regression is its inability to account for interactions between predictors without explicitly adding interaction terms. For instance, the combined effects of age and sex on risk may not be fully captured in this model. Additionally, the model assumes a predefined functional form, which limits its flexibility in identifying nonlinear relationships between predictors and outcomes. As a result, more complex patterns in the data may remain undetected, suggesting the need for alternative modeling approaches such as random forests or decision trees in future studies.
 
-## Model Validation
+## Model Validation {#sec-model_validation}
 
 For the model validation process of the selected logistic regression model, multiple validation techniques were used. Firstly, a ROC curve was constructed to visualize the trade-off between sensitivity and specificity. The ROC curve showed a high curve that deviated from the linear line representing random chance between sensitivity and specificity. The AUC value accompanying the ROC curve was above 0.8 for all three prediction models constructed for different variables. 
 
@@ -351,11 +341,11 @@ Details of the model validation are provided in the appendix (@sec-appendixc).
 
 The results of this analysis are summarized in @fig-model_region, @fig-model_sex, and @fig-model_age to give an all-rounded picture of the predicted probability of high risk based on the different predictor variables. 
 
-## Predicted Probability of High Risk by Region
+## Predicted Probability of High Risk by Region {#sec-results_region}
 
 ```{r}
 #| label: fig-model_region
-#| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural)
+#| fig-cap: Predicted probability of high risk of COVID-19 by region (Urban vs. Rural). This is a density plot showing that the extremes of predicted probability of high risk are more frequent for both urban and rural regions. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -409,11 +399,11 @@ ggplot(filtered_data, aes(x = Predicted_Probability, fill = Region)) +
 Based on these results, the predicted probability of high risk is higher in rural areas than urban areas and the predicted probability of low risk is higher in urban areas than rural. This is indicated by the height of the peaks at the higher and lower end of the scale, where the peaks for urban regions are taller at the lower end of the probability of high risk scale and shorter at the higher end. The height of the peaks indicate the density of datapoints that fall around the respective predicted value. 
 
 \newpage
-## Predicted Probability of High Risk by Sex
+## Predicted Probability of High Risk by Sex {#sec-results_sex}
 
 ```{r}
 #| label: fig-model_sex
-#| fig-cap: Predicted probability of high risk based on sex
+#| fig-cap: Predicted probability of high risk based on sex. The box-and-whiskers plots show that the median value of the predicted probability of high risk is similar for males and females. There is a large IQR for both. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -464,11 +454,11 @@ ggplot(filtered_data, aes(x = Sex, y = Predicted_Probability, fill = Sex)) +
 
 @fig-model_sex compares the predicted probability of high risk based on biological sex, representing the model in a similar box-and-whiskers plot method. As shown in the figure, males (represented by 'm') have a noticeably higher predicted probability of high risk than females (represented by 'f'). The predicted probability of a male qualifying as high risk for COVID-19 is above 50%, while the number is below 50% for females. 
 
-## Predicted Probability of High Risk by Age Interval
+## Predicted Probability of High Risk by Age Interval {#sec-results_age}
 
 ```{r}
 #| label: fig-model_age
-#| fig-cap: Predicted probability of high risk based on age intervals
+#| fig-cap: Predicted probability of high risk based on age intervals. The median predicted probability of high risk is shown as a decimal, where age intervals [20, 30) and [50, 60) have relatively higher predicted probabilities of high risk. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -531,15 +521,41 @@ ggplot(median_data, aes(x = Age_Interval, y = Median_Probability)) +
 
 # Discussion {#sec-discussion}
 
-## Interpreting High Risk Predictions {#sec-firstpoint}
+## Interpreting Results {#sec-firstpoint}
 
-The results of this analysis displays information into how demographic and regional factors influence the likelihood of being classified as high risk for COVID-19. The logistic regression model, designed to predict the probability of high risk, effectively highlighted the relative importance of age, sex, and region in shaping these probabilities. Notably, rural regions consistently showed higher predicted probabilities of high risk compared to urban regions. This disparity underscores the challenges faced by rural areas, such as limited access to healthcare infrastructure, which may contribute to higher case fatality rates (CFR).
+The results of this analysis displays information into how demographic and regional factors influence the likelihood of being classified as high risk for COVID-19. The logistic regression model, designed to predict the probability of high risk, effectively highlighted the relative importance of age, sex, and region in shaping these probabilities. 
 
-Similarly, the analysis revealed that males are more likely to be classified as high risk than females, aligning with previous research suggesting that biological differences, comorbidities, and health-seeking behaviors could account for this discrepancy. Age also played a pivotal role, with certain age intervals, such as 10–20 and 30–40, showing significantly higher probabilities of high risk. This pattern may reflect complex interactions between behavioral, immunological, and societal factors influencing COVID-19 outcomes. Understanding these relationships is important for tailoring public health interventions and resource allocation strategies.
+### Predicted Probability of High Risk by Region {#sec-discussion_region}
+
+Based on @fig-model_region, there is a higher density of individuals predicted to have high risk in the urban regions than in the rural regions. This disparity underscores the potential challenges faced by urban regions, such as overcrowding and not enough healthcare, which may contribute to higher case fatality rates (CFR). Since patients of COVID-19 were encouraged to stay at home even after testing positive at a hospital, patients who lived in urban regions may not have been able to access quick enough healthcare if their symptoms were to worsen rapidly. This could be reflected in the higher predicted risks for these communities. Overall, the predicted probability of high risk between the two regions were not much different, potentially reflecting that both regions experience certain challenges in healthcare and are similar in the amount and timeliness of healthcare received. 
+
+Another aspect of the figures that is worth pointing out, if not a more important aspect, is the overall shape. There are significantly higher densities at the extremes of the predicted probability of high risk than moderate levels for both urban and rural regions. A potential explanation of this is that individuals have high disparities in access to healthcare regardless of the region they live in. In other words, people either had really good, timely healthcare or really bad healthcare in both urban and rural regions. This indicates that the region an individual lived in may not have been the strongest predictor the high risk. More research and analysis are needed to identify the underlying variables that correlate with this pattern. 
+
+### Predicted Probability of High Risk by Sex {#sec-discussion_sex}
+
+The analysis revealed that there are no significant differences in predicted probability of high risk in males and females. The size of the difference is extremely small, especially compared to the IQR highlighted in @fig-model_sex. The potential differences can be attributed to biological differences, comorbidities, and health-seeking behaviors. There may be a slight difference between sexes in the sensitivity to one's own health conditions, willingness to seek healthcare, and other aspects. However, the analysis shows that the high risk is essentially equal for the two sexes. There is also an extremely large distribution of predicted probabilities within sexes as shown by the IQR. Therefore, more research and analysis will be needed to conclude that there are or are no sexual differences in the predicted probability of high risk. 
+
+### Predicted Probability of High Risk by Age {#sec-discussion_age}
+
+Age also played a pivotal role, with certain age intervals, such as 20-30 and 50-60, showing significantly higher probabilities of high risk. There is no clear trend where higher or lower age groups have increased or decreased predicted risk. This pattern may reflect complex interactions between behavioral, immunological, and societal factors influencing COVID-19 outcomes. For example, 20-30 year-olds may be more engaged in social activities and more constantly in the workplace. They may also be less likely to have started families with children and be less careful with their health and hygiene. 50-60 year-olds may still be out in the work field with relatively high social interactions while also have reduced or decreasing immunity to pathogens. Understanding these relationships is important for tailoring public health interventions and resource allocation strategies. Further research with more targeted variables and measures such as frequency of social activity and overall health conditions may be necessary to find key relationships between age and probability of high risk. 
+
+## Interpreting Predicted Probability of High Risk for COVID-19 {#sec-highrisk}
+
+Based on the model set-up [@sec-model_setup], the probability of high risk is the predicted probability that the calculated level of high risk based on demographic information of a specific datapoint is above the median level of high risk for the dataset. In terms of the real-world, this is the chance that someone is more likely to die from COVID-19 compared to the rest of the population. 
+
+## High Risk Mechanisms in Public Health Research {#sec-publichealth}
+
+The analysis of high risk is commonly used in public health settings, especially in epidemiology. The high risk approach allows the analysis to better identify the groups that are at higher risk or more likely to yield a negative outcome from the disease [@platt]. In the case of this analysis, the high risk groups that are identified are those who are more likely to find COVID-19 fatal rather than mild. 
+
+The results generally show moderate to weak correlations and relationships between the different demographic characteristics and the predicted probability of high risk. This is common depending on the topic of focus. Since COVID-19 is being examined, this situation is considered normal since COVID-19 does not have obvious strong predictors [@marin]. 
+
+Returning to the discussion of the use of the high risk approach in public health research, it is an increasingly popular approach due to the strong focus it has on individuals and communities that are more at risk [@platt]. This can direct actions and prevention to those who are most in need and can be especially important when the disease is fatal, such as COVID-19. Although this analysis shows little difference between different demographic characteristics, the approach can still have an effect when large populations are considered. As for other cases where there are clear differences in risk, for example, using age as a predictor of cancer and implementing closer monitoring for older individuals, may lead to more lives saved [@bastian]. 
 
 ## Key Future Implications {#sec-secondpoint}
 
-The findings of this study have implications for future pandemic preparedness and response. By identifying demographic and regional factors associated with higher probabilities of high risk, policymakers can develop targeted interventions to mitigate disparities. For example, enhancing healthcare infrastructure in rural areas and prioritizing vaccination and testing campaigns for high-risk groups can help reduce the impact of future pandemics.
+A key takeaway from this study is the intersection between demographic factors and social determinants of health. There are specific demographic groups that may have well-documented disadvantages in accessing healthcare, which may be reflected as higher risk. Addressing these social determinants, such as income inequality, education, and healthcare infrastructure, could have long-term benefits for public health beyond the current pandemic. Interventions should not only focus on immediate health needs but also work toward alleviating these systemic disparities.
+
+By identifying demographic and regional factors associated with higher probabilities of high risk, policymakers can develop targeted interventions to mitigate disparities. For example, enhancing healthcare infrastructure in rural areas and prioritizing vaccination and testing campaigns for high-risk groups can help reduce the impact of future pandemics.
 
 Additionally, the use of logistic regression models to predict high-risk classifications provides a robust framework for decision-making. This approach could be extended to other diseases or health outcomes, offering a scalable and interpretable method for public health planning. The analysis also highlights the importance of maintaining high-quality, standardized datasets to facilitate cross-regional and cross-demographic comparisons.
 
@@ -549,7 +565,9 @@ Despite its strengths, this study has several limitations that should be address
 
 Another limitation is the reliance on aggregate data, which may obscure individual-level variability and interactions. For example, the interplay between age, sex, and comorbidities at the individual level could yield more nuanced insights. Additionally, the classification of rural and urban regions may oversimplify the diversity within these categories, such as the distinction between suburban and remote rural areas.
 
-Thirdly, the data obtained for COVID-19 is obviously in the past and no longer an issue that is of primary concern. This issue is in line with the generalizability issue due to limited surveying countries. The patterns and models may be limited in generalizability due to the sole focus on COVID-19. 
+The patterns identified do not show strong correlations. The relationships between the key predictors (age, sex, and region) may not fully capture the complexity of the underlying risk factors. There could be additional variables that influence risk but were not included in this analysis. Furthermore, the correlations between these predictors and the high-risk classification may be influenced by other unmeasured or unobserved factors. These aspects of the dataset require further exploration in future research to better understand the full range of factors that contribute to COVID-19 risk and to refine the models used for risk classification.
+
+Finally, the data obtained for COVID-19 is obviously in the past and no longer an issue that is of primary concern. This issue is in line with the generalizability issue due to limited surveying countries. The patterns and models may be limited in generalizability due to the sole focus on COVID-19. The data itself also has limitations of not fully representing the population due to data collection methods. Only groups of individuals who report to hospitals or governments were sampled, leading to potential biases. 
 
 ## Next Steps {#sec-fourthpoint}
 
@@ -563,13 +581,35 @@ Another next step that could be taken is to use the analysis and modeling on a b
 
 # Appendix {#sec-appendix}
 
-## Appendix A: Survey and Sampling Details {#sec-appendixa}
+## Appendix A: Raw Data {#sec-appendixraw}
+
+```{r}
+#| label: fig-head_analysis_data
+#| fig-cap: First six rows of the dataset after cleaning. Shows columns including key variables including region, date, sex, age, cases, deaths, and CFR.
+#| echo: false
+#| warning: false
+#| message: false
+
+# Load the necessary library
+library(knitr)
+
+# Display the first few rows of analysis_data
+head_table <- head(analysis_data)
+
+# Render the table with kable
+kable(
+  head_table,
+  booktabs = TRUE,  # Add better table styling
+)
+```
+
+## Appendix B: Survey and Sampling Details {#sec-appendixa}
 
 The dataset used in this analysis is sourced from the COVerAGE-DB, a repository of COVID-19 demographic data. The database compiles data from a diverse set of sources, including government health agencies, international organizations, and other reputable institutions, ensuring a broad representation of regions and demographics. Each entry in the dataset represents an aggregation of cases, deaths, and demographic information categorized by age, sex, and region.
 
 ### Collection Process
 
-Data collection follows a systematic approach. For primary sources, COVerAGE-DB retrieves data directly from official government dashboards, public health reports, and institutional publications (@cite-dowd2020). This ensures that the dataset reflects real-world phenomena with minimal distortion.
+Data collection follows a systematic approach. For primary sources, COVerAGE-DB retrieves data directly from official government dashboards, public health reports, and institutional publications [@dowd2020]. This ensures that the dataset reflects real-world phenomena with minimal distortion.
 
 The database ensures standardization by processing the raw data from various sources through rigorous standardization to ensure comparability. For example, age intervals are harmonized across sources to create a unified structure suitable for cross-regional analysis.
 
@@ -583,15 +623,70 @@ While the dataset covers a broad range of countries and regions, its representat
 
 ### Observational Nature and Limitations
 
-The data is observational, collected without experimental controls. As a result, confounding factors such as healthcare system differences, socioeconomic disparities, and public health policies must be carefully considered when interpreting results (@cite-ioannidis2021). For instance, differences in testing rates across regions can influence the apparent number of cases and consequently impact measures like CFR.
+The data is observational, collected without experimental controls. As a result, confounding factors such as healthcare system differences, socioeconomic disparities, and public health policies must be carefully considered when interpreting results [@ioannidis2021]. For instance, differences in testing rates across regions can influence the apparent number of cases and consequently impact measures like CFR.
 
-## Appendix B: Model Selection Details {#sec-appendixb}
+## Appendix C: Idealized Methodology {#sec-appendix_method}
+
+The data collection method currently used in the dataset has some key limitations of not being able to reach the entire population. The idealized methodology will address these issues by implementing a new way of data collection where, if done in 2022, will provide a more representative dataset of COVID-19 data and information. 
+
+The idealized methodology would have in-person PCR testing for the sample to gather data on the number of tests, number of cases, age, sex, and region. The number of deaths can be difficult to survey in-person without the support of government agencies. Therefore, the data for number of deaths can still be collected from relevant government institutions, as Canadians are required to report deaths to the government. This combined methodology will allow a more accurate dataset of COVID-19 and demographics information. 
+
+### Population
+
+The population, given that the goal of the analysis is to generalize to the Canadian population, would be people living in Canada permanently. This includes all Canadian citizens, permanent residence, and any individuals with a Visa that extends for more than one year (2022). 
+
+### Frame
+
+In the case of this methodology, when there are no financial limitations in play, the frame would be the same as the population. Since there are no restrictions on what households or Canadian citizens can't be sampled, the frame is essentially a subset of the population that is the entire population.
+
+### Sample and Sampling Method
+
+The sample would be a subset from the population. The idealized method must ensure that the sample consists of a representative group of individuals. The method to be used will be systematic sampling, where people would be hired to visit 1 of every 10 houses or apartments (or other units of living) and sample everyone within that household. This will avoid any sampling biases such as only sampling people who go out (if sampled on the streets) or only sampling people who drive (if sampling on roads). 
+
+For every household sampled, the surveyor will conduct a PCR test for each person in the household, record each test, record the number of tests that return as positive as the number of cases, and gather demographic information of each person in the household such as such as sex and age. Region of the household should already be known and should also be recorded as part of the dataset. 
+
+This should result in a dataset with a sufficient sample size. Given that there is an estimated 15.3 million households in 2022 [@households], the sample will consist of 1,530,000 households. There are an estimated 3 people per household [@familysize], leaving a sample of around 4.59 million people. 
+
+The systematic sampling method ensures that a sufficient sample size will be gathered and allows rather accurate prediction of the number of datapoints within the sample. It also ensures for uniform coverage and that sampling wouldn't be biased towards certain communities or subgroups. However, limitations could surface if the selected samples are not responding, not available, or refuse to co-operate. The systematic sampling method makes it hard to change the sample size if sitations like this were to occur. 
+
+The sampling procedure will be repeated monthly until the end of the year to gather time-related data. 
+
+### Handling Non-response
+
+Non-response could mean not being at home during the visit of the surveyor or not willing to participate. The initial response to this could be to re-visit another time and attempt to persuade the participant to co-operate. 
+
+If a small number of households refuse to participate after repeated visits, the broad demographic information (such as region) can be recorded and later adjusted for during the data anlysis process. However, if a large number of households refuse to participate, specific parts of the data may need to be re-sampled or dropped, which may cause biases in the analysis. An attempt to address this may be to adjust the dataset based on known demographic information, but certain biases may be unavoidable. 
+
+### Idealized Procedure
+
+**Consent:** The surveyor will read this to the participant of the test before conducting the tests and ask for their signature. 
+
+"Thank you for your will in potentially co-operating in this COVID-19 study. By participating in this study, you agree to provide demographic information and respond to questions related to COVID-19. The procedure will require conducting PCR test for you and asking you basic questions regarding your demographic characteristics. Your participation is voluntary, and all data will be kept confidential and anonymous and used solely for research purposes. You may withdraw from the study at any time without penalty. If you have any questions about the study, please feel free to ask. If you acknowledge your rights and are willing to consent to this study, please sign."
+
+**PCR:** The surveyor will conduct a PCR test for individuals who have consented to the study. 
+
+**COVID-19 Information:** The surveyor will record the number of PCR tests conducted in the household and the number of positives. 
+
+**Demographic Questions:** The surveyor will ask the following questions or record the known answer. \begin{itemize}
+  \item What is your biological sex at birth?
+  \item What is your age?
+  \item What area do you live in? Urban or rural?
+\end{itemize}
+
+
+**Debrief:** The surveyor will read the following to the participants after conducting the test and asking the questions. 
+
+"Thank you for participating in this study. The information you provided on demographic factors and the test done for COVID-19 positivity will help us better understand the impact of the pandemic across different demographic groups. Your responses will contribute to valuable research aimed at improving public health strategies. If you have any questions or would like further information about the study, please feel free to contact us at "brucejc.zhang\@mail.utoronto.ca"
+
+**Data Consolidation:** The data collected by surveyors will be matched with the death-data from governments and hospitals at the end of the year of 2022 and will prepare the data for analysis for any patterns or trends as done in this analysis. 
+
+## Appendix D: Model Selection Details {#sec-appendixb}
 
 During the model selection process, model figures were generated for the linear regression model. As shown in @fig-appendixb, the data was difficult to represent and relationships were difficult to identify due to the categorical nature of the variables. This led to attempts to model the data in different ways. The second method that was attempted was using a logistic regression model, which was able to represent the data well and make predictions about high risk. These figures are shown within the @sec-results of the paper. 
 
 ```{r}
 #| label: fig-appendixb
-#| fig-cap: Linear Regression Model for dataset
+#| fig-cap: Linear Regression Model for dataset. No clear pattern can be observed. Weak predictive power is seen. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -629,13 +724,13 @@ ggplot(filtered_data, aes(x = Predicted_CFR, y = CFR)) +
 
 ```
 
-## Appendix C: Model Validation Details {#sec-appendixc}
+## Appendix E: Model Validation Details {#sec-appendixc}
 
 ### ROC Curve and AUC
 
 ```{r}
 #| label: fig-appendix_roc
-#| fig-cap: ROC Curve and AUC Value for Logistic Regression Model
+#| fig-cap: ROC Curve and AUC Value for Logistic Regression Model. The ROC curve and AUC values show that the logistic regression model yields a moderately high predictive performance for the dataset. 
 #| echo: false
 #| warning: false
 #| message: false
@@ -643,9 +738,11 @@ ggplot(filtered_data, aes(x = Predicted_CFR, y = CFR)) +
 # Load necessary libraries
 library(pROC)
 library(ggplot2)
+library(here)
+library(arrow)
 set.seed(21)
 
-analysis_data <- read.csv(here("data/02-analysis_data/modeling_data.csv"))
+analysis_data <- read_parquet(here("data", "03-model_data", "modeling_data.parquet"))
 
 # Ensure High_Risk is binary (convert if necessary)
 analysis_data <- analysis_data %>%
